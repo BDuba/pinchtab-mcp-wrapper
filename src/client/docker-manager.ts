@@ -2,6 +2,7 @@ import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import { getConfig } from '../config.js';
 import { getLogger } from '../logger.js';
+import { access } from 'fs/promises';
 
 const execAsync = promisify(exec);
 const logger = getLogger();
@@ -10,9 +11,50 @@ export class DockerManager {
   private config = getConfig();
   private containerName: string;
   private isRunning = false;
+  private dockerPath: string | null = null;
 
   constructor() {
     this.containerName = this.config.dockerName;
+  }
+
+  private async findDocker(): Promise<string | null> {
+    if (this.dockerPath) {
+      return this.dockerPath;
+    }
+
+    const paths = [
+      process.env.DOCKER_PATH,
+      '/opt/homebrew/bin/docker',
+      '/usr/local/bin/docker',
+      '/Applications/OrbStack.app/Contents/MacOS/../bin/docker',
+      '/Applications/Docker.app/Contents/Resources/bin/docker',
+      `${process.env.HOME}/.docker/bin/docker`,
+      '/usr/bin/docker',
+      'docker',
+    ].filter(Boolean) as string[];
+
+    for (const path of paths) {
+      try {
+        await access(path);
+        this.dockerPath = path;
+        logger.debug(`Found docker at: ${path}`);
+        return path;
+      } catch {
+        continue;
+      }
+    }
+
+    try {
+      const { stdout } = await execAsync('which docker');
+      if (stdout.trim()) {
+        this.dockerPath = stdout.trim();
+        logger.debug(`Found docker via which: ${this.dockerPath}`);
+        return this.dockerPath;
+      }
+    } catch {
+    }
+
+    return null;
   }
 
   async start(): Promise<{ url: string; token: string }> {
@@ -24,22 +66,23 @@ export class DockerManager {
       };
     }
 
+    const dockerPath = await this.findDocker();
+    if (!dockerPath) {
+      throw new Error('Docker not found. Please install Docker or set DOCKER_PATH environment variable.');
+    }
+
     logger.info(`Starting Pinchtab Docker container: ${this.containerName}`);
 
-    // Generate token if not provided
     const token = this.config.token || this.generateToken();
 
-    // Ensure state directory exists
     await this.ensureStateDir();
 
-    // Check if container already exists
     const exists = await this.containerExists();
     if (exists) {
       logger.info('Removing existing container');
       await this.stop();
     }
 
-    // Build docker run command
     const portMapping = this.config.publish
       ? `${this.config.port}:${this.config.port}`
       : `127.0.0.1:${this.config.port}:${this.config.port}`;
@@ -53,7 +96,7 @@ export class DockerManager {
     ];
 
     const cmd = [
-      'docker', 'run', '-d',
+      dockerPath, 'run', '-d',
       '--name', this.containerName,
       '-p', portMapping,
       ...envArgs,
@@ -107,12 +150,15 @@ export class DockerManager {
   }
 
   async stop(): Promise<void> {
+    const dockerPath = await this.findDocker();
+    if (!dockerPath) {
+      return;
+    }
+
     if (!this.isRunning) {
-      // Still try to remove container even if not tracked as running
       try {
-        await execAsync(`docker rm -f ${this.containerName} 2>/dev/null || true`);
+        await execAsync(`${dockerPath} rm -f ${this.containerName} 2>/dev/null || true`);
       } catch {
-        // Ignore errors
       }
       return;
     }
@@ -120,8 +166,8 @@ export class DockerManager {
     logger.info(`Stopping Pinchtab container: ${this.containerName}`);
     
     try {
-      await execAsync(`docker stop ${this.containerName} 2>/dev/null || true`);
-      await execAsync(`docker rm ${this.containerName} 2>/dev/null || true`);
+      await execAsync(`${dockerPath} stop ${this.containerName} 2>/dev/null || true`);
+      await execAsync(`${dockerPath} rm ${this.containerName} 2>/dev/null || true`);
       this.isRunning = false;
       logger.info('Container stopped');
     } catch (error) {
@@ -130,8 +176,12 @@ export class DockerManager {
   }
 
   private async containerExists(): Promise<boolean> {
+    const dockerPath = await this.findDocker();
+    if (!dockerPath) {
+      return false;
+    }
     try {
-      const { stdout } = await execAsync(`docker ps -a -q -f name=${this.containerName}`);
+      const { stdout } = await execAsync(`${dockerPath} ps -a -q -f name=${this.containerName}`);
       return stdout.trim().length > 0;
     } catch {
       return false;
