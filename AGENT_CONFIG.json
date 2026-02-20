@@ -1,0 +1,70 @@
+{
+  "name": "pinchtab-browser-agent",
+  "version": "1.0.0",
+  "description": "OpenCode agent with Pinchtab browser automation capabilities",
+  "mcpServers": {
+    "pinchtab": {
+      "command": "node",
+      "args": [
+        "/root/pinchtab-mcp-wrapper/dist/index.js"
+      ],
+      "env": {
+        "PINCHTAB_MODE": "docker",
+        "PINCHTAB_TOKEN": "opencode-browser-token",
+        "PINCHTAB_DOCKER_IMAGE": "pinchtab/pinchtab:v0.4.0",
+        "DEFAULT_SNAPSHOT_FORMAT": "compact",
+        "DEFAULT_MAX_TOKENS": "2500",
+        "SCREENSHOT_DEFAULT_DELIVERY": "base64",
+        "LOG_LEVEL": "info"
+      },
+      "description": "Pinchtab browser automation for web testing and interaction"
+    }
+  },
+  "tools": {
+    "enabled": [
+      "pinchtab_health",
+      "tab_list",
+      "tab_open",
+      "tab_close",
+      "navigate",
+      "snapshot",
+      "text",
+      "read_page",
+      "list_interactives",
+      "read_region",
+      "observe_changes",
+      "action",
+      "evaluate",
+      "tab_lock",
+      "tab_unlock",
+      "screenshot"
+    ]
+  },
+  "capabilities": [
+    "web_navigation",
+    "page_interaction",
+    "form_filling",
+    "screenshot_capture",
+    "text_extraction",
+    "javascript_execution",
+    "multi_tab_management",
+    "accessibility_testing"
+  ],
+  "bestPractices": {
+    "webAutomation": [
+      "Always use read_page for text extraction (token efficient)",
+      "Use list_interactives to find clickable elements",
+      "Lock tabs when multiple agents may access them",
+      "Take screenshots before and after actions",
+      "Use observe_changes to verify state changes",
+      "Prefer element refs over selectors for stability"
+    ],
+    "tokenEfficiency": [
+      "Use read_page instead of snapshot for text content",
+      "Use list_interactives instead of full snapshot",
+      "Set maxTokens parameter to limit response size",
+      "Use compact format for snapshots",
+      "Use diff mode for change detection"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "pinchtab": {
+      "command": "node",
+      "args": ["/root/pinchtab-mcp-wrapper/dist/index.js"],
+      "env": {
+        "PINCHTAB_MODE": "docker",
+        "PINCHTAB_TOKEN": "opencode-token",
+        "PINCHTAB_DOCKER_IMAGE": "pinchtab/pinchtab:v0.4.0",
+        "LOG_LEVEL": "info"
+      },
+      "description": "Pinchtab browser automation via MCP"
+    }
+  }
+}

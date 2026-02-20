@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  pinchtab:
+    image: ${PINCHTAB_DOCKER_IMAGE:-pinchtab/pinchtab:v0.4.0}
+    container_name: pinchtab-test
+    ports:
+      - "127.0.0.1:19867:9867"
+    environment:
+      - BRIDGE_PORT=9867
+      - BRIDGE_TOKEN=test-token
+      - BRIDGE_HEADLESS=true
+      - BRIDGE_STATE_DIR=/data
+      - BRIDGE_PROFILE=/data/chrome-profile
+    volumes:
+      - pinchtab-test-data:/data
+    security_opt:
+      - seccomp:unconfined
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio-test
+    ports:
+      - "19000:9000"
+      - "19001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio-test-data:/data
+    command: server /data --console-address ":9001"
+
+volumes:
+  pinchtab-test-data:
+  minio-test-data:

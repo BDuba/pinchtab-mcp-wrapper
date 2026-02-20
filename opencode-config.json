@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "pinchtab": {
+      "type": "local",
+      "command": [
+        "node",
+        "/root/pinchtab-mcp-wrapper/dist/index.js"
+      ],
+      "environment": {
+        "PINCHTAB_MODE": "docker",
+        "PINCHTAB_TOKEN": "opencode-browser-token-secure",
+        "PINCHTAB_DOCKER_IMAGE": "pinchtab:local",
+        "DEFAULT_SNAPSHOT_FORMAT": "compact",
+        "DEFAULT_MAX_TOKENS": "2500",
+        "SCREENSHOT_DEFAULT_DELIVERY": "base64",
+        "LOG_LEVEL": "info"
+      },
+      "enabled": true
+    }
+  }
+}
