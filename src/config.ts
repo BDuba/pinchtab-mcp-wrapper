@@ -7,7 +7,7 @@ import { PinchtabMode, SnapshotFormat, DeliveryMode } from './types/index.js';
 // Default configuration values
 const DEFAULTS = {
   MODE: 'auto' as PinchtabMode,
-  DOCKER_IMAGE: 'pinchtab/pinchtab:v0.4.0',
+  DOCKER_IMAGE: 'pinchtab/pinchtab:v0.5.1',
   DOCKER_NAME: 'pinchtab',
   STATE_DIR: `${process.env.HOME || process.env.USERPROFILE}/.pinchtab-mcp/state`,
   PORT: 9867,
