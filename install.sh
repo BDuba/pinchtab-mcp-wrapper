@@ -1,8 +1,12 @@
 #!/bin/bash
 # One-line installer for pinchtab-mcp-wrapper
-# Usage: curl -fsSL https://raw.githubusercontent.com/yourusername/pinchtab-mcp-wrapper/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
 
 set -e
+
+# Non-TTY git settings to prevent interactive prompts
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/bin/false
 
 echo "🦀 Installing Pinchtab MCP Wrapper for OpenCode..."
 
@@ -10,20 +14,94 @@ echo "🦀 Installing Pinchtab MCP Wrapper for OpenCode..."
 INSTALL_DIR="${HOME}/.pinchtab-mcp-wrapper"
 CONFIG_DIR="${HOME}/.config/opencode"
 TOKEN="${PINCHTAB_TOKEN:-opencode-browser-token-secure}"
+PINCHTAB_VERSION="${PINCHTAB_VERSION:-v0.5.1}"
 
 # Colors
+BLUE='\033[0;34m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Function to find Docker binary
+find_docker() {
+    local docker_paths=(
+        "/opt/homebrew/bin/docker"
+        "/usr/local/bin/docker"
+        "/Applications/OrbStack.app/Contents/MacOS/../bin/docker"
+        "/Applications/Docker.app/Contents/Resources/bin/docker"
+        "$HOME/.docker/bin/docker"
+        "/usr/bin/docker"
+    )
+    
+    if [ -n "$DOCKER_PATH" ] && [ -x "$DOCKER_PATH" ]; then
+        echo "$DOCKER_PATH"
+        return 0
+    fi
+    
+    for path in "${docker_paths[@]}"; do
+        if [ -x "$path" ]; then
+            echo "$path"
+            return 0
+        fi
+    done
+    
+    if command -v docker &> /dev/null; then
+        command -v docker
+        return 0
+    fi
+    
+    return 1
+}
+
+# Function to detect architecture for binary download
+detect_arch() {
+    local arch=$(uname -m)
+    local os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    
+    case "$arch" in
+        x86_64|amd64)
+            echo "${os}-amd64"
+            ;;
+        arm64|aarch64)
+            echo "${os}-arm64"
+            ;;
+        *)
+            echo "${os}-${arch}"
+            ;;
+    esac
+}
+
+# Function to download pinchtab binary
+download_pinchtab_binary() {
+    local arch=$(detect_arch)
+    local download_url="https://github.com/pinchtab/pinchtab/releases/download/${PINCHTAB_VERSION}/pinchtab-${arch}.tar.gz"
+    local bin_dir="$INSTALL_DIR/bin"
+    
+    echo "📥 Downloading Pinchtab binary for ${arch}..."
+    
+    mkdir -p "$bin_dir"
+    
+    if curl -fsSL --connect-timeout 30 "$download_url" | tar -xz -C "$bin_dir" 2>/dev/null; then
+        chmod +x "$bin_dir/pinchtab"
+        echo -e "${GREEN}✅ Pinchtab binary downloaded to ${bin_dir}/pinchtab${NC}"
+        return 0
+    else
+        echo -e "${YELLOW}⚠️  Failed to download Pinchtab binary${NC}"
+        return 1
+    fi
+}
+
 # Check dependencies
 echo "📋 Checking dependencies..."
 
-if ! command -v docker &> /dev/null; then
-    echo -e "${RED}❌ Docker is not installed. Please install Docker first.${NC}"
-    echo "   Visit: https://docs.docker.com/get-docker/"
-    exit 1
+DOCKER_BIN=$(find_docker)
+if [ -z "$DOCKER_BIN" ]; then
+    echo -e "${YELLOW}⚠️  Docker not found - will use external mode with binary${NC}"
+    USE_DOCKER=false
+else
+    echo -e "${GREEN}✅ Docker found: $DOCKER_BIN${NC}"
+    USE_DOCKER=true
 fi
 
 if ! command -v node &> /dev/null; then
@@ -37,20 +115,18 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
-echo -e "${GREEN}✅ All dependencies found${NC}"
+echo -e "${GREEN}✅ Core dependencies found${NC}"
 
 # Clone repository or use local copy
 echo "📥 Downloading pinchtab-mcp-wrapper..."
 if [ -d "$INSTALL_DIR" ]; then
     echo -e "${YELLOW}⚠️  Directory $INSTALL_DIR already exists. Updating...${NC}"
     cd "$INSTALL_DIR"
-    git pull 2>/dev/null || true
+    git pull --depth 1 2>/dev/null || true
 else
-    # Try to clone from GitHub
-    if git clone https://github.com/pinchtab/pinchtab-mcp-wrapper.git "$INSTALL_DIR" 2>/dev/null; then
+    if git clone --depth 1 https://github.com/pinchtab/pinchtab-mcp-wrapper.git "$INSTALL_DIR" 2>/dev/null; then
         echo -e "${GREEN}✅ Cloned from GitHub${NC}"
     elif [ -d "$(dirname "$0")/.git" ] || [ -f "$(dirname "$0")/package.json" ]; then
-        # Running from local copy (e.g., from opencode)
         echo -e "${YELLOW}📁 Using local copy...${NC}"
         mkdir -p "$INSTALL_DIR"
         cp -r "$(dirname "$0")"/* "$INSTALL_DIR/"
@@ -67,26 +143,61 @@ echo "🔧 Building project..."
 npm install
 npm run build
 
-# Build Docker image
-echo "🐳 Building Docker image..."
-docker build -f pinchtab.Dockerfile -t pinchtab:local .
-
-# Create wrapper script
+# Setup mode based on Docker availability
 echo "📝 Creating wrapper script..."
-cat > "$INSTALL_DIR/run-mcp.sh" << 'EOF'
-#!/bin/bash
-# Wrapper script for pinchtab-mcp-wrapper with environment variables
 
-export PINCHTAB_MODE=docker
-export PINCHTAB_TOKEN="${PINCHTAB_TOKEN:-opencode-browser-token-secure}"
+if [ "$USE_DOCKER" = true ]; then
+    echo "🐳 Building Docker image..."
+    if "$DOCKER_BIN" build -f pinchtab.Dockerfile -t pinchtab:local . 2>/dev/null; then
+        echo -e "${GREEN}✅ Docker image built successfully${NC}"
+        
+        cat > "$INSTALL_DIR/run-mcp.sh" << EOF
+#!/bin/bash
+export PINCHTAB_MODE=\${PINCHTAB_MODE:-docker}
+export PINCHTAB_TOKEN="\${PINCHTAB_TOKEN:-$TOKEN}"
 export PINCHTAB_DOCKER_IMAGE=pinchtab:local
 export DEFAULT_SNAPSHOT_FORMAT=compact
 export DEFAULT_MAX_TOKENS=2500
 export SCREENSHOT_DEFAULT_DELIVERY=base64
 export LOG_LEVEL=info
 
-exec node "$(dirname "$0")/dist/index.js"
+exec node "\$(dirname "\$0")/dist/index.js"
 EOF
+    else
+        echo -e "${YELLOW}⚠️  Docker build failed, falling back to external mode${NC}"
+        USE_DOCKER=false
+    fi
+fi
+
+if [ "$USE_DOCKER" = false ]; then
+    echo "🔧 Setting up external mode..."
+    download_pinchtab_binary || {
+        echo -e "${RED}❌ Failed to setup Pinchtab${NC}"
+        echo "   Please install Docker or download pinchtab binary manually"
+        exit 1
+    }
+    
+    cat > "$INSTALL_DIR/run-mcp.sh" << EOF
+#!/bin/bash
+export PINCHTAB_MODE=external
+export PINCHTAB_URL=\${PINCHTAB_URL:-http://127.0.0.1:9867}
+export PINCHTAB_TOKEN="\${PINCHTAB_TOKEN:-$TOKEN}"
+export DEFAULT_SNAPSHOT_FORMAT=compact
+export DEFAULT_MAX_TOKENS=2500
+export SCREENSHOT_DEFAULT_DELIVERY=base64
+export LOG_LEVEL=info
+
+# Auto-start pinchtab if not running
+if ! curl -s http://127.0.0.1:9867/health > /dev/null 2>&1; then
+    echo "Starting Pinchtab server..." >&2
+    \$(dirname "\$0")/bin/pinchtab &
+    sleep 3
+fi
+
+exec node "\$(dirname "\$0")/dist/index.js"
+EOF
+fi
+
 chmod +x "$INSTALL_DIR/run-mcp.sh"
 
 # Create opencode config
@@ -97,12 +208,10 @@ if [ -f "$CONFIG_DIR/opencode.json" ]; then
     echo -e "${YELLOW}⚠️  OpenCode config already exists. Creating backup...${NC}"
     cp "$CONFIG_DIR/opencode.json" "$CONFIG_DIR/opencode.json.backup.$(date +%Y%m%d_%H%M%S)"
     
-    # Check if pinchtab is already configured
     if grep -q '"pinchtab"' "$CONFIG_DIR/opencode.json"; then
         echo -e "${GREEN}✅ Pinchtab already configured in OpenCode${NC}"
     else
         echo "📝 Adding pinchtab to existing config..."
-        # This is a simple approach - for complex configs, manual editing may be needed
         echo -e "${YELLOW}⚠️  Please manually add pinchtab configuration to your opencode.json:${NC}"
         echo ""
         cat << 'CONFIG'
@@ -118,7 +227,6 @@ CONFIG
         echo -e "${YELLOW}   Replace INSTALL_DIR_PLACEHOLDER with: $INSTALL_DIR${NC}"
     fi
 else
-    # Create new config
     cat > "$CONFIG_DIR/opencode.json" << EOF
 {
   "\$schema": "https://opencode.ai/config.json",
@@ -181,6 +289,14 @@ echo -e "${GREEN}✅ Installation complete!${NC}"
 echo ""
 echo "📍 Installation directory: $INSTALL_DIR"
 echo "⚙️  Configuration: $CONFIG_DIR/opencode.json"
+echo ""
+
+if [ "$USE_DOCKER" = true ]; then
+    echo -e "${BLUE}ℹ️  Mode: Docker${NC}"
+else
+    echo -e "${YELLOW}ℹ️  Mode: External (using downloaded binary)${NC}"
+fi
+
 echo ""
 echo -e "${YELLOW}🚀 Next steps:${NC}"
 echo "   1. Restart OpenCode completely"
