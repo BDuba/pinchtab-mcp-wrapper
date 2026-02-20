@@ -266,6 +266,59 @@ Add to `~/.config/zed/settings.json`:
 
 ---
 
+---
+
+## Installation Options
+
+The install script now supports automatic mode detection and graceful fallback:
+
+### Automatic Mode (Default)
+
+The installer automatically detects your environment and chooses the best mode:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+```
+
+**What happens:**
+1. Checks for Docker (including macOS-specific paths: Homebrew, OrbStack, Docker Desktop)
+2. If Docker is available → builds Docker image and uses `docker` mode
+3. If Docker is unavailable → automatically downloads Pinchtab binary and uses `external` mode
+
+### Docker Mode
+
+Recommended for most users. Requires Docker to be installed.
+
+```bash
+export PINCHTAB_MODE=docker
+curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+```
+
+### External Mode (Binary)
+
+For systems without Docker. The installer automatically downloads the Pinchtab binary for your architecture.
+
+```bash
+export PINCHTAB_MODE=external
+curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+```
+
+### macOS Support
+
+The installer automatically detects Docker in the following locations:
+- `/opt/homebrew/bin/docker` (Homebrew on Apple Silicon)
+- `/usr/local/bin/docker` (Homebrew on Intel)
+- `/Applications/OrbStack.app/Contents/MacOS/../bin/docker` (OrbStack)
+- `/Applications/Docker.app/Contents/Resources/bin/docker` (Docker Desktop)
+- `~/.docker/bin/docker` (Docker Desktop alternative)
+
+You can also manually specify the Docker path:
+
+```bash
+export DOCKER_PATH=/opt/homebrew/bin/docker
+curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+```
+
 ## Manual Installation
 
 ```bash
