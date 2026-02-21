@@ -3,6 +3,7 @@
  */
 
 import { PinchtabMode, SnapshotFormat, DeliveryMode } from './types/index.js';
+import { getDefaultScreenshotsDir } from './utils/paths.js';
 
 // Default configuration values
 const DEFAULTS = {
@@ -46,6 +47,11 @@ export interface Config {
   s3SecretAccessKey?: string;
   s3Prefix?: string;
   s3PublicUrlBase?: string;
+  
+  // Screenshot directory settings
+  screenshotsDir: string;
+  screenshotsAutoCreateDir: boolean;
+  screenshotsNamingPattern: string;
   
   // Logging
   logLevel: string;
@@ -123,6 +129,11 @@ export function loadConfig(): Config {
     s3SecretAccessKey: getEnvString('S3_SECRET_ACCESS_KEY'),
     s3Prefix: getEnvString('S3_PREFIX'),
     s3PublicUrlBase: getEnvString('S3_PUBLIC_URL_BASE'),
+    
+    // Screenshot directory settings
+    screenshotsDir: (getEnvString('SCREENSHOTS_DIR') as string | undefined) ?? getDefaultScreenshotsDir(),
+    screenshotsAutoCreateDir: getEnvBoolean('SCREENSHOTS_AUTO_CREATE', true),
+    screenshotsNamingPattern: getEnvString('SCREENSHOTS_PATTERN', '{timestamp}-{tabId}.jpg') ?? '{timestamp}-{tabId}.jpg',
     
     // Logging
     logLevel: getEnvString('LOG_LEVEL', DEFAULTS.LOG_LEVEL)!,
