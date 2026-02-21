@@ -2,6 +2,7 @@ import { ToolWithHandler } from '../../types/index.js';
 import { PinchtabClient } from '../../client/pinchtab-client.js';
 import { getConfig } from '../../config.js';
 import { uploadToS3, generateScreenshotFilename } from '../../utils/s3-uploader.js';
+import { saveScreenshotToFile } from '../../utils/paths.js';
 
 export function registerScreenshotTool(tools: Map<string, ToolWithHandler>): void {
   const tool: ToolWithHandler = {
@@ -29,7 +30,7 @@ export function registerScreenshotTool(tools: Map<string, ToolWithHandler>): voi
         },
         path: {
           type: 'string',
-          description: 'File path for delivery=file mode',
+          description: 'File path for delivery=file mode (relative or absolute)',
         },
       },
       required: [],
@@ -68,12 +69,11 @@ export function registerScreenshotTool(tools: Map<string, ToolWithHandler>): voi
         };
       }
 
-      if (delivery === 'file' && p.path) {
-        const fs = await import('fs/promises');
-        await fs.writeFile(p.path, imageBuffer);
+      if (delivery === 'file') {
+        const result = await saveScreenshotToFile(imageBuffer, p.path, p.tabId);
         return {
           mime: 'image/jpeg',
-          path: p.path,
+          path: result.path,
         };
       }
 
