@@ -314,3 +314,28 @@ echo -e "${YELLOW}🔧 To customize:${NC}"
 echo "   Edit $INSTALL_DIR/run-mcp.sh to change environment variables"
 echo "   Edit $CONFIG_DIR/opencode.json to add more MCP servers"
 echo ""
+
+# Setup screenshots directory
+setup_screenshots_dir() {
+    local default_dir
+    
+    case "$(uname -s)" in
+        Darwin*)
+            default_dir="$HOME/Pictures/Screenshots"
+            ;;
+        MINGW*|CYGWIN*|MSYS*)
+            default_dir="${USERPROFILE:-$HOME}/Pictures/Screenshots"
+            ;;
+        *)
+            default_dir="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
+            ;;
+    esac
+    
+    mkdir -p "$default_dir"
+    
+    echo "export SCREENSHOTS_DIR=\"$default_dir\"" >> "$INSTALL_DIR/run-mcp.sh"
+    
+    echo -e "${GREEN}✅ Screenshots directory: $default_dir${NC}"
+}
+
+setup_screenshots_dir
