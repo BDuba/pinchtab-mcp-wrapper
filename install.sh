@@ -204,6 +204,45 @@ chmod +x "$INSTALL_DIR/run-mcp.sh"
 echo "⚙️  Configuring OpenCode..."
 mkdir -p "$CONFIG_DIR"
 
+# Function to add pinchtab to config using Node.js
+add_pinchtab_to_config() {
+    local config_file="$1"
+    local install_dir="$2"
+    
+    node << NODEEOF
+const fs = require('fs');
+const path = '$config_file';
+const installDir = '$install_dir';
+
+try {
+    const content = fs.readFileSync(path, 'utf8');
+    const config = JSON.parse(content);
+    
+    // Ensure mcp section exists
+    if (!config.mcp) {
+        config.mcp = {};
+    }
+    
+    // Add pinchtab if not exists
+    if (!config.mcp.pinchtab) {
+        config.mcp.pinchtab = {
+            type: "local",
+            command: [installDir + "/run-mcp.sh"],
+            enabled: true
+        };
+        
+        fs.writeFileSync(path, JSON.stringify(config, null, 2));
+        console.log("✅ Pinchtab automatically added to existing config");
+    } else {
+        console.log("✅ Pinchtab already configured");
+    }
+} catch (error) {
+    console.error("❌ Error updating config:", error.message);
+    process.exit(1);
+}
+NODEEOF
+}
+
 if [ -f "$CONFIG_DIR/opencode.json" ]; then
     echo -e "${YELLOW}⚠️  OpenCode config already exists. Creating backup...${NC}"
     cp "$CONFIG_DIR/opencode.json" "$CONFIG_DIR/opencode.json.backup.$(date +%Y%m%d_%H%M%S)"
@@ -212,22 +251,15 @@ if [ -f "$CONFIG_DIR/opencode.json" ]; then
         echo -e "${GREEN}✅ Pinchtab already configured in OpenCode${NC}"
     else
         echo "📝 Adding pinchtab to existing config..."
-        echo -e "${YELLOW}⚠️  Please manually add pinchtab configuration to your opencode.json:${NC}"
-        echo ""
-        cat << 'CONFIG'
-"mcp": {
-  "pinchtab": {
-    "type": "local",
-    "command": ["INSTALL_DIR_PLACEHOLDER/run-mcp.sh"],
-    "enabled": true
-  }
-}
-CONFIG
-        echo ""
-        echo -e "${YELLOW}   Replace INSTALL_DIR_PLACEHOLDER with: $INSTALL_DIR${NC}"
+        if add_pinchtab_to_config "$CONFIG_DIR/opencode.json" "$INSTALL_DIR"; then
+            echo -e "${GREEN}✅ Configuration updated successfully${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Could not auto-update config. Please manually add:${NC}"
+            echo "   $INSTALL_DIR/run-mcp.sh to your mcp servers"
+        fi
     fi
 else
-    cat > "$CONFIG_DIR/opencode.json" << EOF
+    cat > "$CONFIG_DIR/opencode.json" << EOFCFG
 {
   "\$schema": "https://opencode.ai/config.json",
   "mcp": {
@@ -238,7 +270,7 @@ else
     }
   }
 }
-EOF
+EOFCFG
     echo -e "${GREEN}✅ Created new OpenCode config${NC}"
 fi
 
@@ -339,3 +371,116 @@ setup_screenshots_dir() {
 }
 
 setup_screenshots_dir
+
+# Configure other AI agents
+echo "🤖 Checking for other AI agent configurations..."
+
+# Claude Code (.mcp.json)
+if [ -f "$HOME/.mcp.json" ] || [ -f ".mcp.json" ]; then
+    echo "📁 Found Claude Code config"
+    for config_file in "$HOME/.mcp.json" ".mcp.json"; do
+        if [ -f "$config_file" ]; then
+            if ! grep -q '"pinchtab"' "$config_file" 2>/dev/null; then
+                echo "📝 Adding pinchtab to Claude Code config..."
+                node << NODEEOF
+const fs = require('fs');
+const path = '$config_file';
+const installDir = '$INSTALL_DIR';
+
+try {
+    const content = fs.readFileSync(path, 'utf8');
+    const config = JSON.parse(content);
+    
+    if (!config.mcpServers) {
+        config.mcpServers = {};
+    }
+    
+    if (!config.mcpServers.pinchtab) {
+        config.mcpServers.pinchtab = {
+            command: "bash",
+            args: [installDir + "/run-mcp.sh"]
+        };
+        
+        fs.writeFileSync(path, JSON.stringify(config, null, 2));
+        console.log("✅ Pinchtab added to Claude Code config");
+    }
+} catch (error) {
+    console.error("❌ Error:", error.message);
+}
+NODEEOF
+            fi
+            break
+        fi
+    done
+fi
+
+# Cursor (settings.json)
+CURSOR_CONFIG="$HOME/.config/Cursor/User/settings.json"
+if [ -f "$CURSOR_CONFIG" ]; then
+    echo "📁 Found Cursor config"
+    if ! grep -q '"pinchtab"' "$CURSOR_CONFIG" 2>/dev/null; then
+        echo "📝 Adding pinchtab to Cursor config..."
+        node << NODEEOF
+const fs = require('fs');
+const path = '$CURSOR_CONFIG';
+const installDir = '$INSTALL_DIR';
+
+try {
+    const content = fs.readFileSync(path, 'utf8');
+    const config = JSON.parse(content);
+    
+    if (!config.mcpServers) {
+        config.mcpServers = {};
+    }
+    
+    if (!config.mcpServers.pinchtab) {
+        config.mcpServers.pinchtab = {
+            type: "stdio",
+            command: "bash",
+            args: [installDir + "/run-mcp.sh"]
+        };
+        
+        fs.writeFileSync(path, JSON.stringify(config, null, 2));
+        console.log("✅ Pinchtab added to Cursor config");
+    }
+} catch (error) {
+    console.error("❌ Error:", error.message);
+}
+NODEEOF
+    fi
+fi
+
+# Zed (settings.json)
+ZED_CONFIG="$HOME/.config/zed/settings.json"
+if [ -f "$ZED_CONFIG" ]; then
+    echo "📁 Found Zed config"
+    if ! grep -q '"pinchtab"' "$ZED_CONFIG" 2>/dev/null; then
+        echo "📝 Adding pinchtab to Zed config..."
+        node << NODEEOF
+const fs = require('fs');
+const path = '$ZED_CONFIG';
+const installDir = '$INSTALL_DIR';
+
+try {
+    const content = fs.readFileSync(path, 'utf8');
+    const config = JSON.parse(content);
+    
+    if (!config.context_servers) {
+        config.context_servers = {};
+    }
+    
+    if (!config.context_servers.pinchtab) {
+        config.context_servers.pinchtab = {
+            command: "bash",
+            args: [installDir + "/run-mcp.sh"]
+        };
+        
+        fs.writeFileSync(path, JSON.stringify(config, null, 2));
+        console.log("✅ Pinchtab added to Zed config");
+    }
+} catch (error) {
+    console.error("❌ Error:", error.message);
+}
+NODEEOF
+    fi
+fi
