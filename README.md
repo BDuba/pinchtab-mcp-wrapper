@@ -50,7 +50,7 @@ When AI agents need to browse the web, efficiency matters. Pinchtab delivers **5
 ### One-Line Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BDuba/pinchtab-mcp-wrapper/main/install.sh | bash
 ```
 
 **Requirements:** Docker, Node.js 18+, npm
@@ -277,7 +277,7 @@ The install script now supports automatic mode detection and graceful fallback:
 The installer automatically detects your environment and chooses the best mode:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BDuba/pinchtab-mcp-wrapper/main/install.sh | bash
 ```
 
 **What happens:**
@@ -291,7 +291,7 @@ Recommended for most users. Requires Docker to be installed.
 
 ```bash
 export PINCHTAB_MODE=docker
-curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BDuba/pinchtab-mcp-wrapper/main/install.sh | bash
 ```
 
 ### External Mode (Binary)
@@ -300,7 +300,7 @@ For systems without Docker. The installer automatically downloads the Pinchtab b
 
 ```bash
 export PINCHTAB_MODE=external
-curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BDuba/pinchtab-mcp-wrapper/main/install.sh | bash
 ```
 
 ### macOS Support
@@ -316,14 +316,14 @@ You can also manually specify the Docker path:
 
 ```bash
 export DOCKER_PATH=/opt/homebrew/bin/docker
-curl -fsSL https://raw.githubusercontent.com/pinchtab/pinchtab-mcp-wrapper/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/BDuba/pinchtab-mcp-wrapper/main/install.sh | bash
 ```
 
 ## Manual Installation
 
 ```bash
 # Clone
-git clone https://github.com/pinchtab/pinchtab-mcp-wrapper.git
+git clone https://github.com/BDuba/pinchtab-mcp-wrapper.git
 cd pinchtab-mcp-wrapper
 
 # Build
