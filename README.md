@@ -461,6 +461,17 @@ npm test
 
 ---
 
+## Release History
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
+
+**Latest release**: v0.2.0 (2026-02-21)
+- Added `pinchtab_download` tool for file downloads using browser session
+- Updated to Pinchtab 0.6.1 with bug fixes and improvements
+- Enhanced installation and multi-agent configuration
+
+---
+
 ## Credits & License
 
 This MCP wrapper is built on [Pinchtab](https://github.com/pinchtab/pinchtab) by Luigi Agosti and contributors.
