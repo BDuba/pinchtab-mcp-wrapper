@@ -347,6 +347,49 @@ chmod +x run-mcp.sh
 
 ## Configuration
 
+### Screenshot File Delivery (New)
+
+When using `delivery: "file"`, you can now use relative paths and auto-naming:
+
+```json
+{
+  "tool": "screenshot",
+  "params": {
+    "delivery": "file"
+    // Auto-saved to: ~/Pictures/Screenshots/2026-02-21T12-34-56-tab-123.jpg
+  }
+}
+```
+
+```json
+{
+  "tool": "screenshot",
+  "params": {
+    "delivery": "file",
+    "path": "google/homepage.jpg"
+    // Saved to: ~/Pictures/Screenshots/google/homepage.jpg
+  }
+}
+```
+
+```json
+{
+  "tool": "screenshot",
+  "params": {
+    "delivery": "file",
+    "path": "/absolute/path/to/screenshot.png"
+    // Absolute paths still work as before
+  }
+}
+```
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SCREENSHOTS_DIR` | Base directory for screenshots | OS-specific (~/Pictures/Screenshots) |
+| `SCREENSHOTS_AUTO_CREATE` | Auto-create directories | `true` |
+| `SCREENSHOTS_PATTERN` | Filename pattern | `{timestamp}-{tabId}.jpg` |
+
+
 ### Environment Variables
 
 ```bash
