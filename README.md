@@ -268,6 +268,22 @@ Add to `~/.config/zed/settings.json`:
 
 ---
 
+## Automatic Configuration for Multiple AI Agents
+
+The installer now automatically detects and configures pinchtab for multiple AI agents:
+
+- **OpenCode** (`~/.config/opencode/opencode.json`)
+- **Claude Code** (`~/.mcp.json` or `./.mcp.json`)
+- **Cursor** (`~/.config/Cursor/User/settings.json`)
+- **Zed** (`~/.config/zed/settings.json`)
+
+If a config file already exists, the installer will:
+1. Create a backup (`.backup.YYYYMMDD_HHMMSS`)
+2. Automatically merge pinchtab configuration using Node.js
+3. Preserve all existing settings
+
+No manual editing required - just run the installer and restart your AI agent!
+
 ## Installation Options
 
 The install script now supports automatic mode detection and graceful fallback:
