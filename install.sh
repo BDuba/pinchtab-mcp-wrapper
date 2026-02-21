@@ -14,7 +14,7 @@ echo "🦀 Installing Pinchtab MCP Wrapper for OpenCode..."
 INSTALL_DIR="${HOME}/.pinchtab-mcp-wrapper"
 CONFIG_DIR="${HOME}/.config/opencode"
 TOKEN="${PINCHTAB_TOKEN:-opencode-browser-token-secure}"
-PINCHTAB_VERSION="${PINCHTAB_VERSION:-v0.5.1}"
+PINCHTAB_VERSION="${PINCHTAB_VERSION:-v0.6.1}"
 
 # Colors
 BLUE='\033[0;34m'
@@ -341,6 +341,7 @@ echo "   pinchtab_screenshot  - Take a screenshot"
 echo "   pinchtab_snapshot    - Get page structure"
 echo "   pinchtab_text        - Extract page text"
 echo "   pinchtab_action      - Click, type, etc."
+echo "   pinchtab_download    - Download files using browser session"
 echo ""
 echo -e "${YELLOW}🔧 To customize:${NC}"
 echo "   Edit $INSTALL_DIR/run-mcp.sh to change environment variables"

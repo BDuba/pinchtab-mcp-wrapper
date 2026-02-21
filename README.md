@@ -180,6 +180,7 @@ interactives = pinchtab_list_interactives()
 | `pinchtab_action` | Click, type, fill forms |
 | `pinchtab_screenshot` | Take JPEG screenshot |
 | `pinchtab_evaluate` | Run JavaScript |
+| `pinchtab_download` | Download files using browser session (preserves cookies, auth, stealth) |
 | `pinchtab_tab_lock` | Lock tab for exclusive access |
 
 ---

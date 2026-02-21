@@ -257,4 +257,68 @@ export class PinchtabClient {
       throw error;
     }
   }
+
+  async download(
+    url: string,
+    options: {
+      tabId?: string;
+      output?: 'file' | 'base64' | 'raw';
+      path?: string;
+      raw?: boolean;
+    } = {}
+  ): Promise<Buffer | { data: string; contentType: string; size: number; url: string } | { status: string; path: string; size: number; contentType: string }> {
+    const query = new URLSearchParams();
+    query.set('url', url);
+    if (options.tabId) query.set('tabId', options.tabId);
+    if (options.output) query.set('output', options.output);
+    if (options.path) query.set('path', options.path);
+    if (options.raw) query.set('raw', 'true');
+
+    const endpoint = `/download?${query.toString()}`;
+    
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.defaultTimeout);
+
+    try {
+      logger.debug(`HTTP GET ${this.baseUrl}${endpoint} (download)`);
+      
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method: 'GET',
+        headers,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new PinchtabError(
+          `Download failed: ${response.status}`,
+          'DOWNLOAD_ERROR',
+          response.status
+        );
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      
+      if (options.output === 'file' || options.path) {
+        return await response.json() as { status: string; path: string; size: number; contentType: string };
+      } else if (options.raw || options.output === 'raw') {
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      } else if (contentType.includes('application/json')) {
+        return await response.json() as { data: string; contentType: string; size: number; url: string };
+      } else {
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  }
 }

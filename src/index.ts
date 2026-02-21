@@ -20,6 +20,7 @@ import { registerActionTool } from './tools/thin/action.js';
 import { registerEvaluateTool } from './tools/thin/evaluate.js';
 import { registerLockTools } from './tools/thin/lock.js';
 import { registerScreenshotTool } from './tools/thin/screenshot.js';
+import { registerDownloadTool } from './tools/thin/download.js';
 
 // Import macro tools
 import { registerReadPageTool } from './tools/macro/read-page.js';
@@ -136,6 +137,7 @@ export class PinchtabMcpServer {
     registerEvaluateTool(this.tools);
     registerLockTools(this.tools);
     registerScreenshotTool(this.tools);
+    registerDownloadTool(this.tools);
 
     // Macro tools
     registerReadPageTool(this.tools);
