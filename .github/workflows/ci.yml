@@ -58,7 +58,18 @@ jobs:
         run: docker compose -f docker-compose.test.yml up -d
       
       - name: Wait for services
-        run: sleep 10
+        run: |
+          echo "Waiting for Pinchtab to be ready..."
+          for i in {1..60}; do
+            if curl -s -H "Authorization: Bearer test-token" http://127.0.0.1:19867/health | grep -q '"status":"ok"'; then
+              echo "Pinchtab is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/60 - waiting..."
+            sleep 1
+          done
+          echo "Timeout waiting for Pinchtab"
+          exit 1
       
       - name: Integration tests
         run: npm run test:integration
