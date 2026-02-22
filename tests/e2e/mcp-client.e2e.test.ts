@@ -12,8 +12,9 @@ describe('E2E Tests - MCP Client', () => {
       command: 'node',
       args: ['dist/index.js'],
       env: {
-        PINCHTAB_MODE: 'docker',
-        PINCHTAB_TOKEN: 'e2e-test-token',
+        PINCHTAB_MODE: 'external',
+        PINCHTAB_URL: 'http://127.0.0.1:19867',
+        PINCHTAB_TOKEN: 'test-token',
         LOG_LEVEL: 'warn',
       },
     });

@@ -27,17 +27,17 @@ describe('Integration Tests', () => {
 
     it('should open and close tab', async () => {
       const tab = await client.openTab();
-      assert.ok(tab.id);
-      await client.closeTab(tab.id);
+      assert.ok(tab.tabId);
+      await client.closeTab(tab.tabId);
     });
   });
 
   describe('Navigation', () => {
     it('should navigate to URL', async () => {
       const tab = await client.openTab();
-      const result = await client.navigate(tab.id, 'data:text/html,<h1>Test</h1>');
+      const result = await client.navigate(tab.tabId, 'data:text/html,<h1>Test</h1>');
       assert.ok(result.url);
-      await client.closeTab(tab.id);
+      await client.closeTab(tab.tabId);
     });
   });
 });
