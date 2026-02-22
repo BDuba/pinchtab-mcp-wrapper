@@ -8,5 +8,7 @@ export DEFAULT_SNAPSHOT_FORMAT=compact
 export DEFAULT_MAX_TOKENS=2500
 export SCREENSHOT_DEFAULT_DELIVERY=base64
 export LOG_LEVEL=info
+# Screenshot directory (set to your preferred location)
+# export SCREENSHOTS_DIR="$HOME/MyScreenshots"
 
 exec node /root/pinchtab-mcp-wrapper/dist/index.js
