@@ -36,7 +36,7 @@ export async function uploadToS3(
 
   // Add AWS Signature V4 headers if credentials provided
   if (config.s3AccessKeyId && config.s3SecretAccessKey) {
-    const date = new Date().toISOString().replace(/[:\-]|\.\d{3}/g, '');
+    const date = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
     headers['X-Amz-Date'] = date;
     headers['X-Amz-Content-SHA256'] = 'UNSIGNED-PAYLOAD';
     // Note: Full AWS SigV4 implementation would go here

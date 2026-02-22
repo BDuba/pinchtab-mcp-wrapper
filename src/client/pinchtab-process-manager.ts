@@ -1,5 +1,6 @@
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
+import { randomUUID } from 'crypto';
 import { getConfig } from '../config.js';
 import { getLogger } from '../logger.js';
 import { PinchtabHealthResponse } from '../types/index.js';
@@ -50,6 +51,7 @@ export class PinchtabProcessManager {
         return this.binaryPath;
       }
     } catch {
+      // Binary not found in PATH
     }
 
     return null;
@@ -93,11 +95,9 @@ export class PinchtabProcessManager {
         detached: true,
       });
 
-      let stdout = '';
       let stderr = '';
 
       this.process.stdout?.on('data', (data) => {
-        stdout += data.toString();
         logger.debug(`Pinchtab stdout: ${data.toString().trim()}`);
       });
 
@@ -152,7 +152,9 @@ export class PinchtabProcessManager {
 
     try {
       await execAsync(`pkill -f "pinchtab" 2>/dev/null || true`);
-    } catch {}
+    } catch {
+      // Process might not exist
+    }
 
     this.isRunning = false;
     logger.info('Process stopped');
@@ -176,8 +178,7 @@ export class PinchtabProcessManager {
   }
 
   private generateToken(): string {
-    const crypto = require('crypto');
-    return crypto.randomBytes(32).toString('hex');
+    return randomUUID().replace(/-/g, '');
   }
 
   private async waitForHealthy(token: string, maxAttempts = 60): Promise<void> {
@@ -203,7 +204,9 @@ export class PinchtabProcessManager {
             logger.debug(`Health check returned status: ${health.status}`);
           }
         }
-      } catch (error) {}
+      } catch {
+        // Ignore retry errors
+      }
 
       logger.debug(`Health check attempt ${attempt}/${maxAttempts}`);
       await new Promise(resolve => setTimeout(resolve, 1000));

@@ -1,5 +1,6 @@
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
+import { randomUUID } from 'crypto';
 import { getConfig } from '../config.js';
 import { getLogger } from '../logger.js';
 import { access } from 'fs/promises';
@@ -52,6 +53,7 @@ export class DockerManager {
         return this.dockerPath;
       }
     } catch {
+      // Docker not found in PATH, continue to return null
     }
 
     return null;
@@ -112,11 +114,10 @@ export class DockerManager {
         stdio: ['inherit', 'pipe', 'pipe'],
       });
 
-      let stdout = '';
       let stderr = '';
 
-      process.stdout?.on('data', (data) => {
-        stdout += data.toString();
+      process.stdout?.on('data', () => {
+        // Intentionally ignoring stdout
       });
 
       process.stderr?.on('data', (data) => {
@@ -159,6 +160,7 @@ export class DockerManager {
       try {
         await execAsync(`${dockerPath} rm -f ${this.containerName} 2>/dev/null || true`);
       } catch {
+        // Container might not exist, ignore error
       }
       return;
     }
@@ -199,8 +201,7 @@ export class DockerManager {
   }
 
   private generateToken(): string {
-    const crypto = require('crypto');
-    return crypto.randomBytes(32).toString('hex');
+    return randomUUID().replace(/-/g, '');
   }
 
   private async waitForHealthy(token: string, maxAttempts = 60): Promise<void> {

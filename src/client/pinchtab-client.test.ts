@@ -26,7 +26,7 @@ describe('PinchtabClient', () => {
     });
 
     it('should accept onUnhealthy callback', () => {
-      const onUnhealthy = async () => {};
+      const onUnhealthy = async (): Promise<void> => {};
       const client = new PinchtabClient(baseUrl, token, 30000, onUnhealthy);
       assert.strictEqual(client['onUnhealthy'], onUnhealthy);
     });
@@ -34,11 +34,11 @@ describe('PinchtabClient', () => {
 
   describe('ensureHealthy', () => {
     let client: PinchtabClient;
-    let mockFetch: any;
+    let mockFetch: ReturnType<typeof mock.fn>;
 
     beforeEach(() => {
       mockFetch = mock.fn();
-      global.fetch = mockFetch;
+      global.fetch = mockFetch as unknown as typeof global.fetch;
       client = new PinchtabClient(baseUrl, token);
     });
 
@@ -62,7 +62,7 @@ describe('PinchtabClient', () => {
 
     it('should call onUnhealthy callback when health is not ok', async () => {
       let unhealthyCalled = false;
-      const onUnhealthy = async () => {
+      const onUnhealthy = async (): Promise<void> => {
         unhealthyCalled = true;
       };
       
@@ -114,7 +114,7 @@ describe('PinchtabClient', () => {
       let restartCount = 0;
       let healthChecks = 0;
       
-      const onUnhealthy = async () => {
+      const onUnhealthy = async (): Promise<void> => {
         restartCount++;
       };
       
@@ -146,11 +146,11 @@ describe('PinchtabClient', () => {
 
   describe('rawHealth', () => {
     let client: PinchtabClient;
-    let mockFetch: any;
+    let mockFetch: ReturnType<typeof mock.fn>;
 
     beforeEach(() => {
       mockFetch = mock.fn();
-      global.fetch = mockFetch;
+      global.fetch = mockFetch as unknown as typeof global.fetch;
       client = new PinchtabClient(baseUrl, token);
     });
 

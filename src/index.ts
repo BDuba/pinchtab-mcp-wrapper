@@ -91,7 +91,8 @@ export class PinchtabMcpServer {
           throw new Error('Pinchtab client not initialized');
         }
 
-        const handler = (tool as any).handler;
+        const toolWithHandler = tool as ToolWithHandler;
+        const handler = toolWithHandler.handler;
         if (!handler) {
           throw new Error(`Tool "${name}" has no handler`);
         }
