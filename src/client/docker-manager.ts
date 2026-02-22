@@ -231,4 +231,11 @@ export class DockerManager {
 
     throw new Error('Health check timeout');
   }
+
+  async restart(): Promise<void> {
+    logger.info('Restarting Pinchtab container');
+    await this.stop();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await this.start();
+  }
 }
