@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   pinchtab:
-    image: ${PINCHTAB_DOCKER_IMAGE:-pinchtab/pinchtab:v0.4.0}
+    image: ${PINCHTAB_DOCKER_IMAGE:-pinchtab/pinchtab:v0.6.1}
     container_name: ${PINCHTAB_DOCKER_NAME:-pinchtab}
     ports:
       - "127.0.0.1:${PINCHTAB_PORT:-9867}:9867"
