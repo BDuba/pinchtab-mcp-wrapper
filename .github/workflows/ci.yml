@@ -55,7 +55,7 @@ jobs:
         run: npm run build
       
       - name: Start test services
-        run: docker-compose -f docker-compose.test.yml up -d
+        run: docker compose -f docker-compose.test.yml up -d
       
       - name: Wait for services
         run: sleep 10
@@ -68,4 +68,4 @@ jobs:
       
       - name: Cleanup
         if: always()
-        run: docker-compose -f docker-compose.test.yml down
+        run: docker compose -f docker-compose.test.yml down
