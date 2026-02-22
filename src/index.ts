@@ -43,7 +43,7 @@ export class PinchtabMcpServer {
     this.server = new Server(
       {
         name: 'pinchtab-mcp-wrapper',
-        version: '0.2.0',
+        version: '0.4.0',
       },
       {
         capabilities: {
