@@ -21,7 +21,7 @@ describe('config', () => {
     const config = loadConfig();
     
     assert.strictEqual(config.mode, 'auto');
-    assert.strictEqual(config.dockerImage, 'pinchtab/pinchtab:v0.4.0');
+    assert.strictEqual(config.dockerImage, 'pinchtab/pinchtab:v0.5.1');
     assert.strictEqual(config.port, 9867);
     assert.strictEqual(config.defaultSnapshotFormat, 'compact');
     assert.strictEqual(config.defaultMaxTokens, 2500);
@@ -65,5 +65,22 @@ describe('config', () => {
     const config2 = getConfig();
     
     assert.strictEqual(config1, config2);
+  });
+
+  it('should load binary path from environment', () => {
+    process.env.PINCHTAB_BINARY_PATH = '/custom/path/pinchtab';
+    
+    const config = loadConfig();
+    
+    assert.strictEqual(config.binaryPath, '/custom/path/pinchtab');
+  });
+
+  it('should use default binary path when not set', () => {
+    delete process.env.PINCHTAB_BINARY_PATH;
+    
+    const config = loadConfig();
+    
+    assert(config.binaryPath);
+    assert(config.binaryPath.includes('.pinchtab-mcp-wrapper/bin/pinchtab'));
   });
 });

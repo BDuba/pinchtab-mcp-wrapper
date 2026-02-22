@@ -18,6 +18,7 @@ const DEFAULTS = {
   FILTER_INTERACTIVE: true,
   SCREENSHOT_DELIVERY: 'base64' as DeliveryMode,
   LOG_LEVEL: 'info',
+  BINARY_PATH: `${process.env.HOME || process.env.USERPROFILE}/.pinchtab-mcp-wrapper/bin/pinchtab`,
 };
 
 export interface Config {
@@ -25,6 +26,7 @@ export interface Config {
   mode: PinchtabMode;
   url?: string;
   token?: string;
+  binaryPath?: string;
   
   // Docker settings
   dockerImage: string;
@@ -107,6 +109,7 @@ export function loadConfig(): Config {
     mode,
     url: getEnvString('PINCHTAB_URL'),
     token: getEnvString('PINCHTAB_TOKEN'),
+    binaryPath: getEnvString('PINCHTAB_BINARY_PATH', DEFAULTS.BINARY_PATH),
     
     // Docker settings
     dockerImage: getEnvString('PINCHTAB_DOCKER_IMAGE', DEFAULTS.DOCKER_IMAGE)!,
