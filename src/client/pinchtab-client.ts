@@ -7,11 +7,116 @@ export class PinchtabClient {
   private baseUrl: string;
   private token?: string;
   private defaultTimeout: number;
+  private onUnhealthy?: () => Promise<void>;
 
-  constructor(baseUrl: string, token?: string, timeout = 30000) {
+  constructor(baseUrl: string, token?: string, timeout = 30000, onUnhealthy?: () => Promise<void>) {
     this.baseUrl = baseUrl.replace(/\/$/, '');
     this.token = token;
     this.defaultTimeout = timeout;
+    this.onUnhealthy = onUnhealthy;
+  }
+
+   async ensureHealthy(): Promise<void> {
+    try {
+      const health = await this.rawHealth();
+
+      if (health.status !== 'ok') {
+        logger.warn(`Pinchtab unhealthy: ${JSON.stringify(health)}`);
+        if (this.onUnhealthy) {
+          logger.info('Attempting restart...');
+          await this.onUnhealthy();
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          const newHealth = await this.rawHealth();
+           if (newHealth.status !== 'ok') {
+            throw new PinchtabError(
+              `Pinchtab still unhealthy after automatic restart: ${JSON.stringify(newHealth)}.\n\n` +
+              'Automatic recovery failed. This could indicate:\n' +
+              '- Chrome cannot start due to missing dependencies\n' +
+              '- Port 9867 is blocked or already in use\n' +
+              '- Insufficient permissions or resources\n\n' +
+              'Please check:\n' +
+              '  1. Docker logs (if using docker mode): docker logs pinchtab\n' +
+              '  2. System resources: free memory, disk space\n' +
+              '  3. Chrome installation: ensure Chrome/Chromium is available\n' +
+              '  4. Firewall settings: port 9867 must be accessible\n',
+              'HEALTH_ERROR'
+            );
+          }
+          logger.info('Restart successful');
+        } else {
+          throw new PinchtabError(
+            `Pinchtab is running but Chrome is not connected (zombie state). Health status: ${JSON.stringify(health)}.\n\n` +
+            'Possible causes:\n' +
+            '- Chrome crashed or failed to start\n' +
+            '- Invalid Chrome flags (CDP_URL environment variable)\n' +
+            '- Insufficient memory or resources\n\n' +
+            'Manual fix:\n' +
+            '  1. Kill the pinchtab process: pkill pinchtab\n' +
+            '  2. Restart your MCP client\n' +
+            '  3. If using external mode, ensure Pinchtab binary is accessible\n',
+            'HEALTH_ERROR'
+          );
+        }
+      }
+    } catch (error) {
+      if (error instanceof PinchtabError) {
+        throw error;
+      }
+      logger.warn(`Health check failed: ${error}`);
+      if (this.onUnhealthy) {
+        logger.info('Attempting restart due to health check failure...');
+        await this.onUnhealthy();
+        await new Promise(resolve => setTimeout(resolve, 3000));
+         const newHealth = await this.rawHealth();
+         if (newHealth.status !== 'ok') {
+          throw new PinchtabError(
+            `Pinchtab still unhealthy after restart: ${JSON.stringify(newHealth)}`,
+            'HEALTH_ERROR'
+          );
+        }
+        logger.info('Restart successful');
+      } else {
+        throw new PinchtabError(
+          `Health check failed and no restart handler: ${error instanceof Error ? error.message : String(error)}.\n\n` +
+          'Cannot connect to Pinchtab server. Possible reasons:\n' +
+          '- Pinchtab process is not running\n' +
+          '- Network connectivity issues\n' +
+          '- Incorrect PINCHTAB_URL configuration\n' +
+          '- Authentication token mismatch\n\n' +
+          'Troubleshooting steps:\n' +
+          '  1. Verify Pinchtab is running: curl http://localhost:9867/health\n' +
+          '  2. Check environment variables: PINCHTAB_URL, PINCHTAB_TOKEN\n' +
+          '  3. Restart the MCP server\n' +
+          '  4. Review logs for detailed error messages\n',
+          'HEALTH_ERROR'
+        );
+      }
+    }
+  }
+
+  private async rawHealth(): Promise<{ status: string }> {
+    const url = `${this.baseUrl}/health`;
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch(url, { headers, signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (response.ok) {
+        const health = await response.json() as { status: string };
+        return health;
+      } else {
+        return { status: 'error' };
+      }
+    } catch {
+      clearTimeout(timeoutId);
+      return { status: 'error' };
+    }
   }
 
   private async request<T>(
@@ -30,6 +135,8 @@ export class PinchtabClient {
     } else {
       logger.debug('No token available for request');
     }
+
+    await this.ensureHealthy();
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.defaultTimeout);
@@ -96,8 +203,9 @@ export class PinchtabClient {
     return this.request('/health', { method: 'GET' });
   }
 
-  async listTabs(): Promise<Array<{ id: string; url: string; title?: string; active: boolean }>> {
-    return this.request('/tabs', { method: 'GET' });
+  async listTabs(): Promise<Array<{ id: string; url: string; title?: string; type?: string }>> {
+    const response = await this.request<{ tabs: Array<{ id: string; url: string; title?: string; type?: string }> }>('/tabs', { method: 'GET' });
+    return response.tabs;
   }
 
   async openTab(url?: string): Promise<{ tabId: string; title: string; url: string }> {
@@ -115,8 +223,11 @@ export class PinchtabClient {
   }
 
   async navigate(tabId: string, url: string): Promise<{ tabId: string; title: string; url: string }> {
-    await this.closeTab(tabId);
-    return this.openTab(url);
+    const response = await this.request<{ title: string; url: string }>('/navigate', {
+      method: 'POST',
+      body: JSON.stringify({ tabId, url }),
+    });
+    return { tabId, title: response.title, url: response.url };
   }
 
   async snapshot(
