@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-22
+
+### Fixed
+- **CI/CD pipeline fully operational** - All GitHub Actions workflows now pass
+  - Added missing `package-lock.json` for reproducible builds
+  - Fixed ESLint configuration with `typescript-eslint`
+  - Resolved all linting errors across the codebase
+  - Updated Docker Compose to v2 syntax
+  - Fixed integration test compilation and execution
+  - Updated Pinchtab Docker image to v0.6.1
+  - Added health check polling for service readiness
+  - Fixed test file discovery in CI environment
+
+### Changed
+- **Code quality improvements**
+  - Fixed `no-empty`, `no-unused-vars`, `no-var-requires` ESLint errors
+  - Replaced `require('crypto')` with ESM imports
+  - Added proper type annotations for mock functions
+  - Updated all source files to follow consistent coding standards
+
+## [0.3.0] - 2026-02-22
+
+### Added
+- **ESLint integration** with TypeScript support
+- **Comprehensive test suite** with unit and integration tests
+- **Automated CI/CD** with GitHub Actions for Node.js 18.x and 20.x
+
+### Fixed
+- **Dependency management** - Added `typescript-eslint` for proper linting
+- **Build process** - Fixed TypeScript compilation for test files
+
 ## [0.2.0] - 2026-02-21
 
 ### Added
@@ -39,5 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenCode integration with agent instructions
 - Basic documentation and examples
 
+[0.4.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/releases/tag/v0.1.0
