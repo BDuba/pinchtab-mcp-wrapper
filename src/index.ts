@@ -8,6 +8,7 @@ import { getConfig } from './config.js';
 import { getLogger, resetLogger } from './logger.js';
 import { PinchtabClient } from './client/pinchtab-client.js';
 import { DockerManager } from './client/docker-manager.js';
+import { PinchtabProcessManager } from './client/pinchtab-process-manager.js';
 import { PinchtabError, ToolWithHandler } from './types/index.js';
 
 // Import tool handlers
@@ -35,6 +36,7 @@ export class PinchtabMcpServer {
   private transport: StdioServerTransport;
   private pinchtabClient?: PinchtabClient;
   private dockerManager?: DockerManager;
+  private processManager?: PinchtabProcessManager;
   private tools: Map<string, ToolWithHandler> = new Map();
 
   constructor() {
@@ -148,6 +150,20 @@ export class PinchtabMcpServer {
     logger.info(`Registered ${this.tools.size} tools`);
   }
 
+  private isLocalUrl(url: string): boolean {
+    try {
+      const urlObj = new URL(url);
+      const localHosts = ['127.0.0.1', 'localhost', '::1'];
+      return localHosts.includes(urlObj.hostname) && urlObj.port === String(getConfig().port);
+    } catch {
+      return false;
+    }
+  }
+
+  private shouldManageBinaryLocally(url: string): boolean {
+    return this.isLocalUrl(url);
+  }
+
   async initialize(): Promise<void> {
     const config = getConfig();
     
@@ -158,12 +174,34 @@ export class PinchtabMcpServer {
       if (!config.url) {
         throw new Error('PINCHTAB_URL required for external mode');
       }
-      this.pinchtabClient = new PinchtabClient(config.url, config.token);
-      logger.info(`Connected to external Pinchtab at ${config.url}`);
+      
+      if (this.shouldManageBinaryLocally(config.url)) {
+        try {
+          this.processManager = new PinchtabProcessManager();
+          const { url, token } = await this.processManager.start();
+          this.pinchtabClient = new PinchtabClient(url, token, undefined, async () => {
+            if (this.processManager) {
+              await this.processManager.restart();
+            }
+          });
+          logger.info(`Started Pinchtab binary at ${url}`);
+        } catch (error) {
+          logger.warn(`Failed to start Pinchtab binary, connecting to existing server: ${error}`);
+          this.pinchtabClient = new PinchtabClient(config.url, config.token);
+          logger.info(`Connected to external Pinchtab at ${config.url}`);
+        }
+      } else {
+        this.pinchtabClient = new PinchtabClient(config.url, config.token);
+        logger.info(`Connected to external Pinchtab at ${config.url}`);
+      }
     } else if (config.mode === 'docker' || config.mode === 'auto') {
       this.dockerManager = new DockerManager();
       const { url, token } = await this.dockerManager.start();
-      this.pinchtabClient = new PinchtabClient(url, token);
+      this.pinchtabClient = new PinchtabClient(url, token, undefined, async () => {
+        if (this.dockerManager) {
+          await this.dockerManager.restart();
+        }
+      });
       logger.info(`Started Pinchtab container at ${url}`);
     }
 
@@ -185,6 +223,10 @@ export class PinchtabMcpServer {
     
     if (this.dockerManager) {
       await this.dockerManager.stop();
+    }
+    
+    if (this.processManager) {
+      await this.processManager.stop();
     }
     
     await this.server.close();
