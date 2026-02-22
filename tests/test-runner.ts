@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
@@ -94,7 +94,7 @@ async function runTests(): Promise<void> {
     // Test 3: Health Check
     const healthStart = Date.now();
     try {
-      const result = await client.callTool({
+      await client.callTool({
         name: 'pinchtab_health',
         arguments: {},
       });
