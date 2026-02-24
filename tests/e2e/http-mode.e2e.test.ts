@@ -35,7 +35,7 @@ describe('HTTP Mode E2E Tests', () => {
     client = new Client(
       {
         name: 'test-client',
-        version: '0.5.0',
+        version: '0.5.1',
       },
       {
         capabilities: {},
@@ -163,7 +163,7 @@ describe('HTTP Mode E2E Tests', () => {
     const badClient = new Client(
       {
         name: 'bad-client',
-        version: '0.5.0',
+        version: '0.5.1',
       },
       {
         capabilities: {},

@@ -181,6 +181,7 @@ interactives = pinchtab_list_interactives()
 | `pinchtab_screenshot` | Take JPEG screenshot |
 | `pinchtab_evaluate` | Run JavaScript |
 | `pinchtab_download` | Download files using browser session (preserves cookies, auth, stealth) |
+| `pinchtab_upload` | Upload files to file inputs (local paths, base64, or data URLs) |
 | `pinchtab_tab_lock` | Lock tab for exclusive access |
 
 ---
@@ -595,7 +596,14 @@ npm test
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
 
-**Latest release**: v0.5.0 (2026-02-24)
+**Latest release**: v0.5.1 (2026-02-24)
+- **Pinchtab v0.6.3 support** - Updated to latest Pinchtab with bug fixes
+- **New `pinchtab_upload` tool** - Upload files to web forms (paths, base64, or data URLs)
+
+**Previous releases**:
+- v0.5.0 - Streamable HTTP transport, multi-transport architecture
+- v0.4.0 - CI/CD pipeline, ESLint, comprehensive test suite
+- v0.2.0 - Download tool, Pinchtab 0.6.1, multi-agent configuration
 - **Streamable HTTP transport support** - Deploy MCP server over HTTP for cloud/remote access
 - Multi-transport architecture with pluggable transport layer
 - Bearer and API-key authentication for HTTP mode

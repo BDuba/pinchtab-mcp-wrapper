@@ -14,7 +14,7 @@ echo "🦀 Installing Pinchtab MCP Wrapper for OpenCode..."
 INSTALL_DIR="${HOME}/.pinchtab-mcp-wrapper"
 CONFIG_DIR="${HOME}/.config/opencode"
 TOKEN="${PINCHTAB_TOKEN:-opencode-browser-token-secure}"
-PINCHTAB_VERSION="${PINCHTAB_VERSION:-v0.6.1}"
+PINCHTAB_VERSION="${PINCHTAB_VERSION:-v0.6.3}"
 
 # Colors
 BLUE='\033[0;34m'

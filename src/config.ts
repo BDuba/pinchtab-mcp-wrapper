@@ -9,7 +9,7 @@ import { getDefaultScreenshotsDir } from './utils/paths.js';
 // Default configuration values
 const DEFAULTS = {
   MODE: 'auto' as PinchtabMode,
-  DOCKER_IMAGE: 'pinchtab/pinchtab:v0.6.1',
+  DOCKER_IMAGE: 'pinchtab/pinchtab:v0.6.3',
   DOCKER_NAME: 'pinchtab',
   STATE_DIR: `${process.env.HOME || process.env.USERPROFILE}/.pinchtab-mcp/state`,
   PORT: 9867,

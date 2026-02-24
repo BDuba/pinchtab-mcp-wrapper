@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-02-24
+
+### Added
+
+- **Pinchtab v0.6.3 support** - Updated default Docker image and install script
+- **New `pinchtab_upload` MCP tool** - File upload support (Pinchtab v0.6.2 feature)
+  - Upload files to `<input type="file">` elements
+  - Supports local file paths, base64 encoded data, or data URLs
+  - Handles single and multiple file uploads
+  - Use with `selector` (CSS) or `ref` (element reference)
+  - Example: `pinchtab_upload({tabId: "...", files: [{path: "/tmp/file.pdf"}], selector: "input[type=file]"})`
+
+### Changed
+
+- Updated Pinchtab Docker image from v0.6.1 to v0.6.3
+- Updated install.sh to download Pinchtab v0.6.3 binary
+
 ## [0.5.0] - 2026-02-24
 
 ### Added
@@ -111,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenCode integration with agent instructions
 - Basic documentation and examples
 
+[0.5.1]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.2.0...v0.3.0

@@ -23,6 +23,7 @@ import { registerEvaluateTool } from './tools/thin/evaluate.js';
 import { registerLockTools } from './tools/thin/lock.js';
 import { registerScreenshotTool } from './tools/thin/screenshot.js';
 import { registerDownloadTool } from './tools/thin/download.js';
+import { registerUploadTool } from './tools/thin/upload-file.js';
 
 // Import macro tools
 import { registerReadPageTool } from './tools/macro/read-page.js';
@@ -44,7 +45,7 @@ export class PinchtabMcpServer {
     this.server = new Server(
       {
         name: 'pinchtab-mcp-wrapper',
-        version: '0.5.0',
+        version: '0.5.1',
       },
       {
         capabilities: {
@@ -141,6 +142,7 @@ export class PinchtabMcpServer {
     registerLockTools(this.tools);
     registerScreenshotTool(this.tools);
     registerDownloadTool(this.tools);
+    registerUploadTool(this.tools);
 
     // Macro tools
     registerReadPageTool(this.tools);
@@ -194,7 +196,7 @@ export class PinchtabMcpServer {
   async initialize(): Promise<void> {
     const config = getConfig();
     
-    logger.info('Initializing Pinchtab MCP Wrapper v0.5.0');
+    logger.info('Initializing Pinchtab MCP Wrapper v0.5.1');
     logger.info(`Mode: ${config.mode}`);
     logger.info(`Transport: ${config.transport}`);
 
@@ -290,7 +292,7 @@ async function main(): Promise<void> {
   
   // Debug: Log all environment variables at startup
   logger.info('=== MCP Server Starting ===');
-  logger.info(`Version: 0.5.0`);
+  logger.info(`Version: 0.5.1`);
   logger.info(`PINCHTAB_MODE: ${process.env.PINCHTAB_MODE || 'not set'}`);
   logger.info(`PINCHTAB_TOKEN: ${process.env.PINCHTAB_TOKEN ? 'set (length: ' + process.env.PINCHTAB_TOKEN.length + ')' : 'not set'}`);
   logger.info(`PINCHTAB_DOCKER_IMAGE: ${process.env.PINCHTAB_DOCKER_IMAGE || 'not set'}`);

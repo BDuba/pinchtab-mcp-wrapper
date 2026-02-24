@@ -432,4 +432,38 @@ export class PinchtabClient {
       throw error;
     }
   }
+
+  async upload(
+    tabId: string,
+    files: Array<{
+      path?: string;
+      base64?: string;
+      dataUrl?: string;
+      name?: string;
+    }>,
+    options: {
+      selector?: string;
+      ref?: string;
+    } = {}
+  ): Promise<{ uploaded: boolean; files: string[] }> {
+    const body: {
+      files: Array<{
+        path?: string;
+        base64?: string;
+        dataUrl?: string;
+        name?: string;
+      }>;
+      selector?: string;
+      ref?: string;
+    } = { files };
+    
+    if (options.selector) body.selector = options.selector;
+    if (options.ref) body.ref = options.ref;
+
+    return this.request(`/upload?tabId=${tabId}`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+}
 }

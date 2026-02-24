@@ -206,7 +206,31 @@ export interface ReadRegionParams {
   format?: 'text' | 'compact';
   maxTokens?: number;
 }
+export interface ReadRegionParams {
+  tabId: string;
+  selector: string;
+  format?: 'text' | 'compact';
+  maxTokens?: number;
+}
 
+export interface UploadParams {
+  tabId: string;
+  files: Array<{
+    path?: string;
+    base64?: string;
+    dataUrl?: string;
+    name?: string;
+  }>;
+  selector?: string;
+  ref?: string;
+}
+
+export interface UploadResult {
+  uploaded: boolean;
+  files: string[];
+}
+
+// Error Types
 // Error Types
 export class PinchtabError extends Error {
   constructor(
