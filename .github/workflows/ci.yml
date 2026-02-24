@@ -71,11 +71,113 @@ jobs:
           echo "Timeout waiting for Pinchtab"
           exit 1
       
-      - name: Integration tests
+      - name: Integration tests (stdio)
         run: npm run test:integration
         env:
           PINCHTAB_URL: http://127.0.0.1:19867
           PINCHTAB_TOKEN: test-token
+      
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down
+
+  integration-http:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build
+        run: npm run build
+      
+      - name: Start test services
+        run: docker compose -f docker-compose.test.yml up -d
+      
+      - name: Wait for Pinchtab
+        run: |
+          echo "Waiting for Pinchtab to be ready..."
+          for i in {1..60}; do
+            if curl -s -H "Authorization: Bearer test-token" http://127.0.0.1:19867/health | grep -q '"status":"ok"'; then
+              echo "Pinchtab is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/60 - waiting..."
+            sleep 1
+          done
+          echo "Timeout waiting for Pinchtab"
+          exit 1
+      
+      - name: Integration tests (Streamable HTTP)
+        run: npm run test:integration:http
+        env:
+          PINCHTAB_URL: http://127.0.0.1:19867
+          PINCHTAB_TOKEN: test-token
+          MCP_HTTP_PORT: 13000
+          MCP_AUTH_TOKEN: mcp-test-token
+      
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.test.yml down
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [build, integration]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build test
+        run: npm run build:test
+      
+      - name: Start test services
+        run: docker compose -f docker-compose.test.yml up -d
+      
+      - name: Wait for Pinchtab
+        run: |
+          echo "Waiting for Pinchtab to be ready..."
+          for i in {1..60}; do
+            if curl -s -H "Authorization: Bearer test-token" http://127.0.0.1:19867/health | grep -q '"status":"ok"'; then
+              echo "Pinchtab is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/60 - waiting..."
+            sleep 1
+          done
+          echo "Timeout waiting for Pinchtab"
+          exit 1
+      
+      - name: E2E tests (stdio)
+        run: npm run test:e2e
+        env:
+          PINCHTAB_URL: http://127.0.0.1:19867
+          PINCHTAB_TOKEN: test-token
+      
+      - name: E2E tests (HTTP mode)
+        run: npm run test:e2e:http
+        env:
+          PINCHTAB_URL: http://127.0.0.1:19867
+          PINCHTAB_TOKEN: test-token
+          MCP_HTTP_PORT: 13001
+          MCP_AUTH_TOKEN: mcp-test-token
       
       - name: Cleanup
         if: always()

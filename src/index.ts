@@ -1,5 +1,4 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -10,6 +9,8 @@ import { PinchtabClient } from './client/pinchtab-client.js';
 import { DockerManager } from './client/docker-manager.js';
 import { PinchtabProcessManager } from './client/pinchtab-process-manager.js';
 import { PinchtabError, ToolWithHandler } from './types/index.js';
+import type { Transport, TransportConfig } from './transports/types.js';
+import { TransportFactory } from './transports/factory.js';
 
 // Import tool handlers
 import { registerHealthTool } from './tools/thin/health.js';
@@ -33,7 +34,7 @@ const logger = getLogger();
 
 export class PinchtabMcpServer {
   private server: Server;
-  private transport: StdioServerTransport;
+  private transport?: Transport;
   private pinchtabClient?: PinchtabClient;
   private dockerManager?: DockerManager;
   private processManager?: PinchtabProcessManager;
@@ -43,7 +44,7 @@ export class PinchtabMcpServer {
     this.server = new Server(
       {
         name: 'pinchtab-mcp-wrapper',
-        version: '0.4.0',
+        version: '0.5.0',
       },
       {
         capabilities: {
@@ -52,7 +53,6 @@ export class PinchtabMcpServer {
       }
     );
 
-    this.transport = new StdioServerTransport();
     this.setupHandlers();
   }
 
@@ -165,11 +165,43 @@ export class PinchtabMcpServer {
     return this.isLocalUrl(url);
   }
 
+  private async createTransport(): Promise<Transport> {
+    const config = getConfig();
+    
+    const transportConfig: TransportConfig = {
+      type: config.transport,
+      port: config.httpPort,
+      host: config.httpHost,
+      path: config.httpPath,
+      authType: config.authType,
+      authToken: config.authToken,
+      enableSessions: config.enableSessions,
+      sessionTimeout: config.sessionTimeout,
+      cors: {
+        origins: config.allowedOrigins,
+      },
+    };
+
+    if (config.transport === 'stdio') {
+      // Stdio can be created synchronously
+      return TransportFactory.createSync(transportConfig);
+    }
+    
+    // HTTP transports require async creation
+    return TransportFactory.create(transportConfig);
+  }
+
   async initialize(): Promise<void> {
     const config = getConfig();
     
-    logger.info('Initializing Pinchtab MCP Wrapper');
+    logger.info('Initializing Pinchtab MCP Wrapper v0.5.0');
     logger.info(`Mode: ${config.mode}`);
+    logger.info(`Transport: ${config.transport}`);
+
+    if (config.transport !== 'stdio') {
+      logger.info(`HTTP endpoint: http://${config.httpHost}:${config.httpPort}${config.httpPath}`);
+      logger.info(`Auth: ${config.authType}`);
+    }
 
     if (config.mode === 'external') {
       if (!config.url) {
@@ -211,12 +243,26 @@ export class PinchtabMcpServer {
       const health = await this.pinchtabClient.health();
       logger.info(`Pinchtab health: ${JSON.stringify(health)}`);
     }
+
+    // Create and initialize transport
+    this.transport = await this.createTransport();
+    logger.info(`Transport created: ${this.transport.getInfo().type}`);
   }
 
   async start(): Promise<void> {
+    if (!this.transport) {
+      throw new Error('Transport not initialized. Call initialize() first.');
+    }
+
     logger.info('Starting MCP server');
-    await this.server.connect(this.transport);
-    logger.info('MCP server connected');
+    await this.transport.connect(this.server);
+    logger.info('MCP server connected and ready');
+    
+    // Log transport info
+    const info = this.transport.getInfo();
+    if (info.endpoint) {
+      logger.info(`Server endpoint: ${info.endpoint}`);
+    }
   }
 
   async stop(): Promise<void> {
@@ -229,6 +275,10 @@ export class PinchtabMcpServer {
     if (this.processManager) {
       await this.processManager.stop();
     }
+
+    if (this.transport) {
+      await this.transport.close();
+    }
     
     await this.server.close();
     logger.info('Server stopped');
@@ -236,12 +286,22 @@ export class PinchtabMcpServer {
 }
 
 async function main(): Promise<void> {
+  const config = getConfig();
+  
   // Debug: Log all environment variables at startup
   logger.info('=== MCP Server Starting ===');
+  logger.info(`Version: 0.5.0`);
   logger.info(`PINCHTAB_MODE: ${process.env.PINCHTAB_MODE || 'not set'}`);
   logger.info(`PINCHTAB_TOKEN: ${process.env.PINCHTAB_TOKEN ? 'set (length: ' + process.env.PINCHTAB_TOKEN.length + ')' : 'not set'}`);
   logger.info(`PINCHTAB_DOCKER_IMAGE: ${process.env.PINCHTAB_DOCKER_IMAGE || 'not set'}`);
   logger.info(`PINCHTAB_URL: ${process.env.PINCHTAB_URL || 'not set'}`);
+  logger.info(`MCP_TRANSPORT: ${config.transport}`);
+  
+  if (config.transport !== 'stdio') {
+    logger.info(`MCP_HTTP_PORT: ${config.httpPort}`);
+    logger.info(`MCP_HTTP_HOST: ${config.httpHost}`);
+    logger.info(`MCP_AUTH_TYPE: ${config.authType}`);
+  }
   
   const server = new PinchtabMcpServer();
 

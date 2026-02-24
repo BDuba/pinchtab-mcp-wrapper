@@ -3,12 +3,13 @@
  */
 
 import { PinchtabMode, SnapshotFormat, DeliveryMode } from './types/index.js';
+import type { TransportType } from './transports/types.js';
 import { getDefaultScreenshotsDir } from './utils/paths.js';
 
 // Default configuration values
 const DEFAULTS = {
   MODE: 'auto' as PinchtabMode,
-  DOCKER_IMAGE: 'pinchtab/pinchtab:v0.5.1',
+  DOCKER_IMAGE: 'pinchtab/pinchtab:v0.6.1',
   DOCKER_NAME: 'pinchtab',
   STATE_DIR: `${process.env.HOME || process.env.USERPROFILE}/.pinchtab-mcp/state`,
   PORT: 9867,
@@ -19,6 +20,15 @@ const DEFAULTS = {
   SCREENSHOT_DELIVERY: 'base64' as DeliveryMode,
   LOG_LEVEL: 'info',
   BINARY_PATH: `${process.env.HOME || process.env.USERPROFILE}/.pinchtab-mcp-wrapper/bin/pinchtab`,
+  
+  // Transport defaults
+  TRANSPORT: 'stdio' as TransportType,
+  HTTP_PORT: 3000,
+  HTTP_HOST: '0.0.0.0',
+  HTTP_PATH: '/mcp',
+  AUTH_TYPE: 'none' as 'none' | 'bearer' | 'api-key',
+  ENABLE_SESSIONS: true,
+  SESSION_TIMEOUT: 3600, // seconds
 };
 
 export interface Config {
@@ -57,6 +67,21 @@ export interface Config {
   
   // Logging
   logLevel: string;
+  
+  // Transport configuration (new in v0.5.0)
+  transport: TransportType;
+  httpPort: number;
+  httpHost: string;
+  httpPath: string;
+  
+  // Auth configuration
+  authType: 'none' | 'bearer' | 'api-key';
+  authToken?: string;
+  allowedOrigins: string[];
+  
+  // Session management
+  enableSessions: boolean;
+  sessionTimeout: number;
 }
 
 function getEnvString(key: string, defaultValue?: string): string | undefined {
@@ -77,12 +102,26 @@ function getEnvBoolean(key: string, defaultValue: boolean): boolean {
   return value.toLowerCase() === 'true' || value === '1';
 }
 
+function getEnvArray(key: string, defaultValue: string[]): string[] {
+  const value = process.env[key];
+  if (value === undefined || value === '') return defaultValue;
+  return value.split(',').map(s => s.trim()).filter(Boolean);
+}
+
 function validateMode(mode: string): PinchtabMode {
   const validModes: PinchtabMode[] = ['auto', 'docker', 'external'];
   if (!validModes.includes(mode as PinchtabMode)) {
     throw new Error(`Invalid PINCHTAB_MODE: ${mode}. Must be one of: ${validModes.join(', ')}`);
   }
   return mode as PinchtabMode;
+}
+
+function validateTransport(transport: string): TransportType {
+  const validTransports: TransportType[] = ['stdio', 'streamable-http', 'sse'];
+  if (!validTransports.includes(transport as TransportType)) {
+    throw new Error(`Invalid MCP_TRANSPORT: ${transport}. Must be one of: ${validTransports.join(', ')}`);
+  }
+  return transport as TransportType;
 }
 
 function validateSnapshotFormat(format: string): SnapshotFormat {
@@ -101,8 +140,18 @@ function validateDeliveryMode(mode: string): DeliveryMode {
   return mode as DeliveryMode;
 }
 
+function validateAuthType(type: string): 'none' | 'bearer' | 'api-key' {
+  const validTypes: Array<'none' | 'bearer' | 'api-key'> = ['none', 'bearer', 'api-key'];
+  if (!validTypes.includes(type as 'none' | 'bearer' | 'api-key')) {
+    throw new Error(`Invalid MCP_AUTH_TYPE: ${type}. Must be one of: ${validTypes.join(', ')}`);
+  }
+  return type as 'none' | 'bearer' | 'api-key';
+}
+
 export function loadConfig(): Config {
   const mode = validateMode(getEnvString('PINCHTAB_MODE', DEFAULTS.MODE)!);
+  const transport = validateTransport(getEnvString('MCP_TRANSPORT', DEFAULTS.TRANSPORT)!);
+  const authType = validateAuthType(getEnvString('MCP_AUTH_TYPE', DEFAULTS.AUTH_TYPE)!);
   
   const config: Config = {
     // Pinchtab connection
@@ -140,6 +189,21 @@ export function loadConfig(): Config {
     
     // Logging
     logLevel: getEnvString('LOG_LEVEL', DEFAULTS.LOG_LEVEL)!,
+    
+    // Transport configuration (v0.5.0)
+    transport,
+    httpPort: getEnvNumber('MCP_HTTP_PORT', DEFAULTS.HTTP_PORT),
+    httpHost: getEnvString('MCP_HTTP_HOST', DEFAULTS.HTTP_HOST)!,
+    httpPath: getEnvString('MCP_HTTP_PATH', DEFAULTS.HTTP_PATH)!,
+    
+    // Auth configuration
+    authType,
+    authToken: getEnvString('MCP_AUTH_TOKEN'),
+    allowedOrigins: getEnvArray('MCP_ALLOWED_ORIGINS', ['*']),
+    
+    // Session management
+    enableSessions: getEnvBoolean('MCP_ENABLE_SESSIONS', DEFAULTS.ENABLE_SESSIONS),
+    sessionTimeout: getEnvNumber('MCP_SESSION_TIMEOUT', DEFAULTS.SESSION_TIMEOUT),
   };
 
   // Validation for external mode
@@ -149,6 +213,18 @@ export function loadConfig(): Config {
     }
     if (!config.token) {
       throw new Error('PINCHTAB_TOKEN is required when PINCHTAB_MODE=external');
+    }
+  }
+
+  // Validation for HTTP transport
+  if (transport !== 'stdio') {
+    if (config.httpPort < 1 || config.httpPort > 65535) {
+      throw new Error(`MCP_HTTP_PORT must be between 1 and 65535`);
+    }
+    
+    // Auth required for HTTP transports in production
+    if (authType === 'none' && process.env.NODE_ENV === 'production') {
+      console.warn('WARNING: HTTP transport without authentication is insecure. Set MCP_AUTH_TYPE and MCP_AUTH_TOKEN');
     }
   }
 

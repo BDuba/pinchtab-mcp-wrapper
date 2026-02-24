@@ -410,6 +410,69 @@ When using `delivery: "file"`, you can now use relative paths and auto-naming:
 ### Environment Variables
 
 ```bash
+# Transport (v0.5.0+)
+MCP_TRANSPORT=stdio               # stdio | streamable-http | sse
+MCP_HTTP_PORT=3000                # HTTP server port
+MCP_HTTP_HOST=0.0.0.0             # HTTP server host
+MCP_AUTH_TYPE=none                # none | bearer | api-key
+MCP_AUTH_TOKEN=secret-token       # Auth token for HTTP mode
+MCP_ALLOWED_ORIGINS=*             # CORS origins
+
+# Pinchtab connection
+PINCHTAB_MODE=docker              # docker | external
+PINCHTAB_TOKEN=secret-token       # Auth token
+DEFAULT_SNAPSHOT_FORMAT=compact   # compact | text | json
+DEFAULT_MAX_TOKENS=2500           # Token budget
+SCREENSHOT_DEFAULT_DELIVERY=base64 # base64 | s3 | file
+```
+
+### HTTP Mode (v0.5.0+)
+
+Pinchtab MCP Wrapper now supports Streamable HTTP transport for remote/cloud deployments.
+
+**Use cases for HTTP mode:**
+- Cloud deployments (AWS, GCP, Azure)
+- Remote AI agent access
+- Serverless architectures
+- Load balancing across multiple instances
+
+**Quick start with HTTP:**
+
+```bash
+# Terminal 1: Start MCP server in HTTP mode
+export MCP_TRANSPORT=streamable-http
+export MCP_HTTP_PORT=3000
+export MCP_AUTH_TYPE=bearer
+export MCP_AUTH_TOKEN=your-secret-token
+npm start
+
+# Terminal 2: Test the HTTP endpoint
+curl http://localhost:3000/health
+```
+
+**HTTP Mode Configuration:**
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCP_TRANSPORT` | Transport type | `stdio` |
+| `MCP_HTTP_PORT` | HTTP server port | `3000` |
+| `MCP_HTTP_HOST` | HTTP server host | `0.0.0.0` |
+| `MCP_HTTP_PATH` | MCP endpoint path | `/mcp` |
+| `MCP_AUTH_TYPE` | Auth type: none, bearer, api-key | `none` |
+| `MCP_AUTH_TOKEN` | Auth token (required for bearer/api-key) | - |
+| `MCP_ALLOWED_ORIGINS` | CORS allowed origins (comma-separated) | `*` |
+| `MCP_ENABLE_SESSIONS` | Enable stateful sessions | `true` |
+| `MCP_SESSION_TIMEOUT` | Session timeout in seconds | `3600` |
+
+**Security best practices for HTTP mode:**
+1. Always use authentication in production (`MCP_AUTH_TYPE=bearer`)
+2. Restrict CORS origins (`MCP_ALLOWED_ORIGINS=https://yourdomain.com`)
+3. Use HTTPS with a reverse proxy (nginx, traefik)
+4. Keep auth tokens secure and rotate regularly
+
+### Pinchtab Options (via Docker)
+
+```bash
 PINCHTAB_MODE=docker              # docker | external
 PINCHTAB_TOKEN=secret-token       # Auth token
 DEFAULT_SNAPSHOT_FORMAT=compact   # compact | text | json
@@ -465,7 +528,17 @@ npm test
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
 
-**Latest release**: v0.2.0 (2026-02-21)
+**Latest release**: v0.5.0 (2026-02-24)
+- **Streamable HTTP transport support** - Deploy MCP server over HTTP for cloud/remote access
+- Multi-transport architecture with pluggable transport layer
+- Bearer and API-key authentication for HTTP mode
+- Session management (stateful/stateless modes)
+- CORS support for web-based clients
+- Updated to MCP SDK v1.9.0 with Streamable HTTP support
+
+**Previous releases**:
+- v0.4.0 - CI/CD pipeline, ESLint, comprehensive test suite
+- v0.2.0 - Download tool, Pinchtab 0.6.1, multi-agent configuration
 - Added `pinchtab_download` tool for file downloads using browser session
 - Updated to Pinchtab 0.6.1 with bug fixes and improvements
 - Enhanced installation and multi-agent configuration

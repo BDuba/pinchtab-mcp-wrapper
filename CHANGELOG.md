@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-02-24
+
+### Added
+
+- **Streamable HTTP transport support** - New multi-transport architecture
+  - Support for `stdio` (default), `streamable-http`, and `sse` transports
+  - HTTP mode enables cloud deployments and remote AI agent access
+  - Bearer and API-key authentication for HTTP transports
+  - Session management with stateful/stateless modes
+  - CORS support for web-based clients
+  - Health check endpoint at `/health`
+  
+- **New transport layer architecture**
+  - Pluggable transport system with `TransportFactory`
+  - `TransportConfig` for unified configuration
+  - `StreamableHTTPTransport` implementing MCP Streamable HTTP spec
+  - `StdioTransport` wrapper for backward compatibility
+  
+- **Enhanced configuration**
+  - New environment variables for HTTP mode:
+    - `MCP_TRANSPORT` - Transport type selection
+    - `MCP_HTTP_PORT`, `MCP_HTTP_HOST` - HTTP server settings
+    - `MCP_AUTH_TYPE`, `MCP_AUTH_TOKEN` - Authentication
+    - `MCP_ALLOWED_ORIGINS` - CORS configuration
+    - `MCP_ENABLE_SESSIONS`, `MCP_SESSION_TIMEOUT` - Session management
+  
+- **ADR documentation** - Architecture Decision Records
+  - ADR-001: Streamable HTTP transport adoption
+  
+- **Testing improvements**
+  - HTTP mode integration tests
+  - E2E tests for Streamable HTTP transport
+  - GitHub Actions jobs for HTTP transport testing
+  - New npm scripts: `start:http`, `test:integration:http`, `test:e2e:http`
+
+### Changed
+
+- **Updated MCP SDK** from v1.0.0 to v1.9.0 with Streamable HTTP support
+- **Refactored server initialization** to support async transport creation
+- **Version bump** to 0.5.0
+
 ## [0.4.0] - 2026-02-22
 
 ### Fixed
@@ -70,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenCode integration with agent instructions
 - Basic documentation and examples
 
+[0.5.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/BDuba/pinchtab-mcp-wrapper/compare/v0.1.0...v0.2.0
