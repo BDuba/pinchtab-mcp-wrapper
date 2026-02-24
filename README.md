@@ -469,7 +469,74 @@ curl http://localhost:3000/health
 2. Restrict CORS origins (`MCP_ALLOWED_ORIGINS=https://yourdomain.com`)
 3. Use HTTPS with a reverse proxy (nginx, traefik)
 4. Keep auth tokens secure and rotate regularly
+**Streamable HTTP Endpoint Details:**
 
+When running in HTTP mode, the MCP server exposes:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `http://host:port/mcp` | POST/GET | Main MCP Streamable HTTP endpoint |
+| `http://host:port/health` | GET | Health check endpoint |
+
+**Example MCP Client Configuration:**
+
+```javascript
+// MCP Client Streamable HTTP configuration
+{
+  "mcpServers": {
+    "pinchtab": {
+      "transport": "streamable-http",
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer your-secret-token"
+      }
+    }
+  }
+}
+```
+
+**HTTP Headers:**
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | If auth enabled | `Bearer <token>` or raw token for api-key |
+| `Content-Type` | Yes | `application/json` |
+| `Mcp-Session-Id` | Optional | Session ID for stateful mode |
+
+**Authentication Examples:**
+
+```bash
+# Bearer token auth
+curl -H "Authorization: Bearer your-secret-token" \
+     http://localhost:3000/mcp
+
+# API key auth (header)
+curl -H "Authorization: your-api-key" \
+     http://localhost:3000/mcp
+
+# API key auth (query param)
+curl "http://localhost:3000/mcp?api_key=your-api-key"
+```
+
+**Connecting from AI Agents:**
+
+Most MCP clients support Streamable HTTP natively. Configure your AI agent with:
+
+```json
+{
+  "mcp": {
+    "pinchtab": {
+      "type": "http",
+      "url": "http://your-server:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer your-secret-token"
+      }
+    }
+  }
+}
+```
+
+### Pinchtab Options (via Docker)
 ### Pinchtab Options (via Docker)
 
 ```bash
