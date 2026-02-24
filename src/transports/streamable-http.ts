@@ -38,7 +38,7 @@ export class StreamableHTTPTransport implements Transport {
     };
   }
 
-  async connect(mcpServer: MCPServer): Promise<void> {
+  async connect(_mcpServer: MCPServer): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         logger.info(`Starting Streamable HTTP transport on ${this.config.host}:${this.config.port}`);
@@ -120,7 +120,7 @@ export class StreamableHTTPTransport implements Transport {
     res.end(JSON.stringify({ error: 'Not found' }));
   }
 
-  private handleHealth(req: http.IncomingMessage, res: http.ServerResponse): void {
+  private handleHealth(_req: http.IncomingMessage, res: http.ServerResponse): void {
     const health = {
       status: 'ok',
       transport: 'streamable-http',
@@ -149,7 +149,7 @@ export class StreamableHTTPTransport implements Transport {
 
       // Delegate to MCP transport
       if (this.mcpTransport) {
-        await this.mcpTransport.handleRequest(req, res, req.body);
+        await this.mcpTransport.handleRequest(req, res, (req as {body?: unknown}).body);
       } else {
         res.writeHead(503, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Transport not ready' }));

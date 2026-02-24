@@ -52,7 +52,7 @@ export class StdioTransport implements Transport {
  * Transport factory
  */
 export class TransportFactory {
-  static create(config: TransportConfig): Transport {
+  static async create(config: TransportConfig): Promise<Transport> {
     logger.info(`Creating transport: ${config.type}`);
 
     switch (config.type) {

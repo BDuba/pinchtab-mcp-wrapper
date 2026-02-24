@@ -19,17 +19,6 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },
-    "build": "tsc",
-    "build:test": "tsc -p tsconfig.test.json",
-    "dev": "tsc --watch",
-    "start": "node dist/index.js",
-    "test": "node --test dist/**/*.test.js",
-    "test:unit": "node --test dist/**/*.test.js",
-    "test:integration": "npm run build:test && node --test dist-test/tests/integration/pinchtab.integration.test.js",
-    "test:e2e": "npm run build:test && node --test 'dist-test/tests/**/*.e2e.test.js'",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
-  },
   "keywords": [
     "mcp",
     "browser",
@@ -42,7 +31,7 @@
   "author": "Platform / Agents Team",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.9.0"
+    "@modelcontextprotocol/sdk": "^1.9.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

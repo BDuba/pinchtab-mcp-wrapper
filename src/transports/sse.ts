@@ -35,7 +35,7 @@ export class SSETransport implements Transport {
     logger.warn('SSE transport is deprecated. Use streamable-http instead.');
   }
 
-  async connect(mcpServer: MCPServer): Promise<void> {
+  async connect(_mcpServer: MCPServer): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         logger.info(`Starting SSE transport on ${this.config.host}:${this.config.port}`);
