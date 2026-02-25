@@ -11,4 +11,4 @@ export LOG_LEVEL=info
 # Screenshot directory (set to your preferred location)
 # export SCREENSHOTS_DIR="$HOME/MyScreenshots"
 
-exec node /root/pinchtab-mcp-wrapper/dist/index.js
+exec node "$(dirname "$0")/dist/index.js"
