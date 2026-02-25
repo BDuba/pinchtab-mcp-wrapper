@@ -57,10 +57,10 @@ export class StreamableHTTPTransport implements Transport {
         // Create MCP transport
         this.mcpTransport = new StreamableHTTPServerTransport({
           sessionIdGenerator: this.config.enableSessions 
-            ? () => generateId()
+            ? (): string => generateId()
             : undefined,
           onsessioninitialized: this.config.enableSessions
-            ? (sessionId) => {
+            ? (sessionId: string): void => {
                 logger.debug(`Session initialized: ${sessionId}`);
                 this.sessions.set(sessionId, {
                   id: sessionId,
