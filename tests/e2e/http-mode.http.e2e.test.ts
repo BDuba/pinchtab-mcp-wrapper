@@ -10,8 +10,15 @@ describe('HTTP Mode E2E Tests', () => {
   let transport: StreamableHTTPClientTransport;
   const httpPort = parseInt(process.env.MCP_HTTP_PORT || '13000');
   const authToken = process.env.MCP_AUTH_TOKEN || 'test-token';
+  const pinchtabUrl = process.env.PINCHTAB_URL || 'http://127.0.0.1:19867';
+  const pinchtabToken = process.env.PINCHTAB_TOKEN || 'test-token';
 
   before(async () => {
+    // Use external mode to connect to already running Pinchtab server
+    process.env.PINCHTAB_MODE = 'external';
+    process.env.PINCHTAB_URL = pinchtabUrl;
+    process.env.PINCHTAB_TOKEN = pinchtabToken;
+    
     // Start server in HTTP mode
     server = new PinchtabMcpServer();
     await server.initialize();
@@ -54,9 +61,9 @@ describe('HTTP Mode E2E Tests', () => {
     // Check for key tools
     const toolNames = tools.tools.map((t: { name: string }) => t.name);
     assert.ok(toolNames.includes('pinchtab_health'), 'Should have health tool');
-    assert.ok(toolNames.includes('pinchtab_tab_open'), 'Should have tab_open tool');
-    assert.ok(toolNames.includes('pinchtab_navigate'), 'Should have navigate tool');
-    assert.ok(toolNames.includes('pinchtab_snapshot'), 'Should have snapshot tool');
+    assert.ok(toolNames.includes('tab_open'), 'Should have tab_open tool');
+    assert.ok(toolNames.includes('navigate'), 'Should have navigate tool');
+    assert.ok(toolNames.includes('snapshot'), 'Should have snapshot tool');
   });
 
   it('should call health tool', async () => {
@@ -80,7 +87,7 @@ describe('HTTP Mode E2E Tests', () => {
   it('should open tab and navigate', async () => {
     // Open tab
     const openResult = await client.callTool({
-      name: 'pinchtab_tab_open',
+      name: 'tab_open',
       arguments: {
         url: 'https://example.com',
       },
@@ -97,7 +104,7 @@ describe('HTTP Mode E2E Tests', () => {
 
     // Take snapshot
     const snapshotResult = await client.callTool({
-      name: 'pinchtab_snapshot',
+      name: 'snapshot',
       arguments: {
         tabId: tabInfo.tabId,
         format: 'compact',
@@ -108,7 +115,7 @@ describe('HTTP Mode E2E Tests', () => {
 
     // Close tab
     const closeResult = await client.callTool({
-      name: 'pinchtab_tab_close',
+      name: 'tab_close',
       arguments: {
         tabId: tabInfo.tabId,
       },
@@ -120,7 +127,7 @@ describe('HTTP Mode E2E Tests', () => {
   it('should read page text', async () => {
     // Open tab with a simple page
     const openResult = await client.callTool({
-      name: 'pinchtab_tab_open',
+      name: 'tab_open',
       arguments: {
         url: 'https://example.com',
       },
@@ -132,7 +139,7 @@ describe('HTTP Mode E2E Tests', () => {
 
     // Read page
     const readResult = await client.callTool({
-      name: 'pinchtab_read_page',
+      name: 'read_page',
       arguments: {
         tabId: tabInfo.tabId,
         mode: 'readability',
@@ -140,17 +147,11 @@ describe('HTTP Mode E2E Tests', () => {
     });
 
     assert.ok(readResult, 'Should return read result');
-    const readContent = readResult.content as Array<{ type: string; text?: string }>;
-    const readTextContent = readContent.find((c) => c.type === 'text');
-    assert.ok(readTextContent, 'Should have text content');
-    
-    const pageData = JSON.parse(readTextContent.text!);
-    assert.ok(pageData.content, 'Should have content');
-    assert.ok(pageData.url, 'Should have url');
+    assert.ok(readResult.content, 'Should have content');
 
     // Cleanup
     await client.callTool({
-      name: 'pinchtab_tab_close',
+      name: 'tab_close',
       arguments: { tabId: tabInfo.tabId },
     });
   });

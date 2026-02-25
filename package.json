@@ -14,8 +14,8 @@
     "test:unit": "node --test dist/**/*.test.js",
     "test:integration": "npm run build:test && node --test dist-test/tests/integration/pinchtab.integration.test.js",
     "test:integration:http": "npm run build:test && node --test dist-test/tests/integration/streamable-http.integration.test.js",
-    "test:e2e": "npm run build:test && node --test 'dist-test/tests/**/*.e2e.test.js'",
-    "test:e2e:http": "npm run build:test && MCP_TRANSPORT=streamable-http node --test 'dist-test/tests/**/*.http.e2e.test.js'",
+    "test:e2e": "npm run build:test && node --test dist-test/tests/**/*.stdio.e2e.test.js",
+    "test:e2e:http": "npm run build:test && MCP_TRANSPORT=streamable-http node --test dist-test/tests/**/*.http.e2e.test.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },

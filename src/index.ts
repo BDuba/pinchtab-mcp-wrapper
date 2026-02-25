@@ -329,4 +329,7 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+// Only run main if this is the main module (not imported)
+if (import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+  main();
+}

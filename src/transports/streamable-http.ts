@@ -39,41 +39,44 @@ export class StreamableHTTPTransport implements Transport {
   }
 
   async connect(_mcpServer: MCPServer): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        logger.info(`Starting Streamable HTTP transport on ${this.config.host}:${this.config.port}`);
+    try {
+      logger.info(`Starting Streamable HTTP transport on ${this.config.host}:${this.config.port}`);
 
-        // Create HTTP server
-        this.server = http.createServer(this.handleRequest.bind(this));
+      // Create HTTP server
+      this.server = http.createServer(this.handleRequest.bind(this));
 
-        // Setup session cleanup
-        if (this.config.enableSessions) {
-          this.cleanupInterval = setInterval(
-            () => this.cleanupSessions(),
-            60000 // Cleanup every minute
-          );
-        }
+      // Setup session cleanup
+      if (this.config.enableSessions) {
+        this.cleanupInterval = setInterval(
+          () => this.cleanupSessions(),
+          60000 // Cleanup every minute
+        );
+      }
 
-        // Create MCP transport
-        this.mcpTransport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: this.config.enableSessions 
-            ? (): string => generateId()
-            : undefined,
-          onsessioninitialized: this.config.enableSessions
-            ? (sessionId: string): void => {
-                logger.debug(`Session initialized: ${sessionId}`);
-                this.sessions.set(sessionId, {
-                  id: sessionId,
-                  createdAt: new Date(),
-                  lastActivity: new Date(),
-                  expiresAt: new Date(Date.now() + (this.config.sessionTimeout || 3600) * 1000),
-                });
-              }
-            : undefined,
-        });
+      // Create MCP transport
+      this.mcpTransport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: this.config.enableSessions 
+          ? (): string => generateId()
+          : undefined,
+        onsessioninitialized: this.config.enableSessions
+          ? (sessionId: string): void => {
+              logger.debug(`Session initialized: ${sessionId}`);
+              this.sessions.set(sessionId, {
+                id: sessionId,
+                createdAt: new Date(),
+                lastActivity: new Date(),
+                expiresAt: new Date(Date.now() + (this.config.sessionTimeout || 3600) * 1000),
+              });
+            }
+          : undefined,
+      });
 
-        // Start listening
-        this.server.listen(this.config.port, this.config.host, () => {
+      // Connect MCP transport to the server
+      await _mcpServer.connect(this.mcpTransport);
+
+      // Start listening
+      await new Promise<void>((resolve, reject) => {
+        this.server!.listen(this.config.port, this.config.host, () => {
           logger.info(`Streamable HTTP transport listening on ${this.config.host}:${this.config.port}`);
           logger.info(`MCP endpoint: ${this.config.path}`);
           logger.info(`Sessions: ${this.config.enableSessions ? 'enabled' : 'disabled'}`);
@@ -82,20 +85,19 @@ export class StreamableHTTPTransport implements Transport {
           resolve();
         });
 
-        // Handle server errors
-        this.server.on('error', (error) => {
+        this.server!.on('error', (error) => {
           logger.error('HTTP server error:', error);
           this.info.status = 'error';
           this.info.error = error.message;
           reject(error);
         });
+      });
 
-      } catch (error) {
-        this.info.status = 'error';
-        this.info.error = error instanceof Error ? error.message : String(error);
-        reject(error);
-      }
-    });
+    } catch (error) {
+      this.info.status = 'error';
+      this.info.error = error instanceof Error ? error.message : String(error);
+      throw error;
+    }
   }
 
   private async handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
