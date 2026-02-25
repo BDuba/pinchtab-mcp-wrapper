@@ -3,8 +3,6 @@ import assert from 'node:assert';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { PinchtabMcpServer } from '../../src/index.js';
-import { getConfig } from '../../src/config.js';
-import type { PinchtabClient } from '../../src/client/pinchtab-client.js';
 
 describe('HTTP Mode E2E Tests', () => {
   let server: PinchtabMcpServer;
@@ -19,14 +17,13 @@ describe('HTTP Mode E2E Tests', () => {
     await server.initialize();
     await server.start();
 
-    // Create client
+    // Create client with Bearer token authentication
     transport = new StreamableHTTPClientTransport(
       new URL(`http://127.0.0.1:${httpPort}/mcp`),
       {
-        authProvider: {
-          tokens: async () => ({
-            access_token: authToken,
-            token_type: 'Bearer',
+        requestInit: {
+          headers: new Headers({
+            'Authorization': `Bearer ${authToken}`,
           }),
         },
       }
@@ -72,10 +69,11 @@ describe('HTTP Mode E2E Tests', () => {
     assert.ok(result.content, 'Should have content');
     
     // Parse result
-    const textContent = result.content.find((c: { type: string }) => c.type === 'text');
+    const content = result.content as Array<{ type: string; text?: string }>;
+    const textContent = content.find((c) => c.type === 'text');
     assert.ok(textContent, 'Should have text content');
     
-    const health = JSON.parse(textContent.text);
+    const health = JSON.parse(textContent.text!);
     assert.equal(health.status, 'ok', 'Health should be ok');
   });
 
@@ -89,10 +87,11 @@ describe('HTTP Mode E2E Tests', () => {
     });
 
     assert.ok(openResult, 'Should return open result');
-    const textContent = openResult.content.find((c: { type: string }) => c.type === 'text');
+    const content = openResult.content as Array<{ type: string; text?: string }>;
+    const textContent = content.find((c) => c.type === 'text');
     assert.ok(textContent, 'Should have text content');
     
-    const tabInfo = JSON.parse(textContent.text);
+    const tabInfo = JSON.parse(textContent.text!);
     assert.ok(tabInfo.tabId, 'Should have tabId');
     assert.ok(tabInfo.url, 'Should have url');
 
@@ -127,8 +126,9 @@ describe('HTTP Mode E2E Tests', () => {
       },
     });
 
-    const textContent = openResult.content.find((c: { type: string }) => c.type === 'text');
-    const tabInfo = JSON.parse(textContent!.text);
+    const content = openResult.content as Array<{ type: string; text?: string }>;
+    const textContent = content.find((c) => c.type === 'text');
+    const tabInfo = JSON.parse(textContent!.text!);
 
     // Read page
     const readResult = await client.callTool({
@@ -140,10 +140,11 @@ describe('HTTP Mode E2E Tests', () => {
     });
 
     assert.ok(readResult, 'Should return read result');
-    const readTextContent = readResult.content.find((c: { type: string }) => c.type === 'text');
+    const readContent = readResult.content as Array<{ type: string; text?: string }>;
+    const readTextContent = readContent.find((c) => c.type === 'text');
     assert.ok(readTextContent, 'Should have text content');
     
-    const pageData = JSON.parse(readTextContent.text);
+    const pageData = JSON.parse(readTextContent.text!);
     assert.ok(pageData.content, 'Should have content');
     assert.ok(pageData.url, 'Should have url');
 
