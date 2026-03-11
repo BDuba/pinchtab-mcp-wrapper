@@ -25,7 +25,7 @@ export class StreamableHTTPTransport implements Transport {
       port: 3000,
       host: '0.0.0.0',
       path: '/mcp',
-      enableSessions: true,
+      enableSessions: false, // Stateless mode by default for better compatibility with MCP clients
       sessionTimeout: 3600,
       ...config,
     };
@@ -113,10 +113,6 @@ export class StreamableHTTPTransport implements Transport {
 
     // Status check endpoint (alias for /health)
     if (url.pathname === '/status' && req.method === 'GET') {
-      this.handleHealth(req, res);
-      return;
-    }
-    if (url.pathname === '/health' && req.method === 'GET') {
       this.handleHealth(req, res);
       return;
     }
