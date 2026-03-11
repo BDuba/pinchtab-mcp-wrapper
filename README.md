@@ -478,7 +478,42 @@ When running in HTTP mode, the MCP server exposes:
 |----------|--------|-------------|
 | `http://host:port/mcp` | POST/GET | Main MCP Streamable HTTP endpoint |
 | `http://host:port/health` | GET | Health check endpoint |
+|| `http://host:port/health` | GET | Health check endpoint |
+| `http://host:port/status` | GET | Status endpoint (alias for health) |
 
+#### LobeChat Integration
+
+For **LobeChat v2** (and other HTTP-based MCP clients):
+
+1. **Start MCP in HTTP mode** (listening on all interfaces for Docker network access):
+```bash
+./run-mcp-http-all.sh
+# or
+export MCP_TRANSPORT=streamable-http
+export MCP_HTTP_HOST=0.0.0.0
+export MCP_HTTP_PORT=3001
+export MCP_AUTH_TYPE=none
+npm start
+```
+
+2. **Configure in LobeChat:**
+   - Go to **Settings** → **Plugins** → **MCP**
+   - Add new MCP server:
+     - **Name**: `pinchtab`
+     - **Type**: `HTTP` (or `Streamable HTTP`)
+     - **URL**: `http://172.21.0.1:3001/mcp` (adjust IP based on your Docker network)
+     - **Auth Type**: `None`
+   - Click **"Test Connection"**
+
+3. **Finding the correct IP address:**
+   - Check your Docker network: `docker network inspect bridge`
+   - Find the gateway IP for your container network
+   - Common values:
+     - `172.17.0.1` - default Docker bridge
+     - `172.21.0.1` - custom networks
+     - `host.docker.internal` - Docker Desktop (Mac/Windows)
+
+**Note:** The `run-mcp-http-all.sh` script listens on `0.0.0.0` to allow connections from any Docker container.
 **Example MCP Client Configuration:**
 
 ```javascript
