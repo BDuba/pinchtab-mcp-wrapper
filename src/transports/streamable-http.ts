@@ -111,6 +111,16 @@ export class StreamableHTTPTransport implements Transport {
       return;
     }
 
+    // Status check endpoint (alias for /health)
+    if (url.pathname === '/status' && req.method === 'GET') {
+      this.handleHealth(req, res);
+      return;
+    }
+    if (url.pathname === '/health' && req.method === 'GET') {
+      this.handleHealth(req, res);
+      return;
+    }
+
     // MCP endpoint
     if (url.pathname === this.config.path) {
       await this.handleMCPRequest(req, res);
@@ -126,7 +136,7 @@ export class StreamableHTTPTransport implements Transport {
     const health = {
       status: 'ok',
       transport: 'streamable-http',
-      version: '0.5.1',
+      version: '0.5.2',
       sessions: this.sessions.size,
       timestamp: new Date().toISOString(),
     };

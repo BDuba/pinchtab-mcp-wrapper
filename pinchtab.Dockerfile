@@ -7,7 +7,7 @@ FROM alpine:3.19 AS builder
 # Build arguments for architecture and version
 ARG TARGETARCH
 ARG TARGETOS=linux
-ARG PINCHTAB_VERSION=v0.6.3
+ARG PINCHTAB_VERSION=v0.7.8
 
 WORKDIR /build
 
@@ -22,11 +22,9 @@ RUN set -e; \
         *) echo "Unsupported architecture: ${TARGETARCH}"; exit 1 ;; \
     esac; \
     echo "Downloading Pinchtab ${PINCHTAB_VERSION} for ${TARGETOS}-${ARCH}"; \
-    curl -fsSL -o pinchtab.tar.gz \
-        "https://github.com/pinchtab/pinchtab/releases/download/${PINCHTAB_VERSION}/pinchtab-${TARGETOS}-${ARCH}.tar.gz"; \
-    tar -xzf pinchtab.tar.gz; \
-    chmod +x pinchtab; \
-    rm pinchtab.tar.gz
+    curl -fsSL -o pinchtab \
+        "https://github.com/pinchtab/pinchtab/releases/download/${PINCHTAB_VERSION}/pinchtab-${TARGETOS}-${ARCH}"; \
+    chmod +x pinchtab
 
 # Stage 2: Runtime with Chrome (Debian-based for glibc compatibility)
 FROM debian:12-slim

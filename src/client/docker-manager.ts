@@ -211,19 +211,25 @@ export class DockerManager {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    logger.info(`Health check URL: ${url}`);
+    logger.info(`Health check token: ${token ? 'set' : 'not set'}`);
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
+        logger.debug(`Attempt ${attempt}: fetching ${url}`);
         const response = await fetch(url, { 
           headers,
           signal: AbortSignal.timeout(2000),
         });
         
+        logger.debug(`Attempt ${attempt}: response status ${response.status}`);
+        
         if (response.ok) {
           logger.info('Health check passed');
           return;
         }
-      } catch {
-        // Ignore errors, retry
+      } catch (e) {
+        logger.error(`Attempt ${attempt}: error ${e}`);
       }
 
       logger.debug(`Health check attempt ${attempt}/${maxAttempts}`);
