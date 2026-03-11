@@ -631,9 +631,8 @@ npm test
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
 
-**Latest release**: v0.5.1 (2026-02-24)
-- **Pinchtab v0.6.3 support** - Updated to latest Pinchtab with bug fixes
-- **New `pinchtab_upload` tool** - Upload files to web forms (paths, base64, or data URLs)
+**Latest release**: v0.5.4 (2026-03-11)
+- **Pinchtab v0.7.8 support** - Updated to latest Pinchtab with bug fixes
 
 **Previous releases**:
 - v0.5.0 - Streamable HTTP transport, multi-transport architecture
