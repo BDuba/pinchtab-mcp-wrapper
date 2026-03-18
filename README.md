@@ -231,6 +231,8 @@ Add to `.mcp.json`:
 }
 ```
 
+**Claude Code Skill (Experimental):** We also provide a skill file for Claude Code CLI users. See [`CLAUDE_CODE_SKILL.md`](CLAUDE_CODE_SKILL.md) for detailed installation and usage instructions in Spanish. You can save this file to `~/.claude/commands/pinchtab.md` and use `/pinchtab` to access the full reference directly in your CLI.
+
 ### Cursor
 
 Add to Cursor's MCP settings (Settings → Features → MCP):
@@ -631,26 +633,15 @@ npm test
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
 
-**Latest release**: v0.5.4 (2026-03-11)
-- **Pinchtab v0.7.8 support** - Updated to latest Pinchtab with bug fixes
+**Latest release**: v0.6.0 (2026-03-18)
+- **Pinchtab v0.8.3 support** - Updated to latest Pinchtab with improvements
+- **Fixed MCP Streamable HTTP transport** - Improved connection stability and error handling
 
 **Previous releases**:
+- v0.5.1 - Pinchtab v0.6.3 support, file upload tool
 - v0.5.0 - Streamable HTTP transport, multi-transport architecture
 - v0.4.0 - CI/CD pipeline, ESLint, comprehensive test suite
 - v0.2.0 - Download tool, Pinchtab 0.6.1, multi-agent configuration
-- **Streamable HTTP transport support** - Deploy MCP server over HTTP for cloud/remote access
-- Multi-transport architecture with pluggable transport layer
-- Bearer and API-key authentication for HTTP mode
-- Session management (stateful/stateless modes)
-- CORS support for web-based clients
-- Updated to MCP SDK v1.9.0 with Streamable HTTP support
-
-**Previous releases**:
-- v0.4.0 - CI/CD pipeline, ESLint, comprehensive test suite
-- v0.2.0 - Download tool, Pinchtab 0.6.1, multi-agent configuration
-- Added `pinchtab_download` tool for file downloads using browser session
-- Updated to Pinchtab 0.6.1 with bug fixes and improvements
-- Enhanced installation and multi-agent configuration
 
 ---
 

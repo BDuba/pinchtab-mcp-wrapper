@@ -1,8 +1,3 @@
-/**
- * Streamable HTTP transport implementation
- * Supports stateful and stateless modes per MCP specification
- */
-
 import http from 'http';
 import type { Server as MCPServer } from '@modelcontextprotocol/sdk/server/index.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -15,7 +10,7 @@ const logger = getLogger();
 export class StreamableHTTPTransport implements Transport {
   private config: TransportConfig;
   private server?: http.Server;
-  private mcpTransport?: StreamableHTTPServerTransport;
+  private mcpServer?: MCPServer;
   private sessions: Map<string, Session> = new Map();
   private info: TransportInfo;
   private cleanupInterval?: NodeJS.Timeout;
@@ -25,7 +20,7 @@ export class StreamableHTTPTransport implements Transport {
       port: 3000,
       host: '0.0.0.0',
       path: '/mcp',
-      enableSessions: false, // Stateless mode by default for better compatibility with MCP clients
+      enableSessions: false,
       sessionTimeout: 3600,
       ...config,
     };
@@ -38,43 +33,20 @@ export class StreamableHTTPTransport implements Transport {
     };
   }
 
-  async connect(_mcpServer: MCPServer): Promise<void> {
+  async connect(mcpServer: MCPServer): Promise<void> {
     try {
+      this.mcpServer = mcpServer;
       logger.info(`Starting Streamable HTTP transport on ${this.config.host}:${this.config.port}`);
 
-      // Create HTTP server
       this.server = http.createServer(this.handleRequest.bind(this));
 
-      // Setup session cleanup
       if (this.config.enableSessions) {
         this.cleanupInterval = setInterval(
           () => this.cleanupSessions(),
-          60000 // Cleanup every minute
+          60000
         );
       }
 
-      // Create MCP transport
-      this.mcpTransport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: this.config.enableSessions 
-          ? (): string => generateId()
-          : undefined,
-        onsessioninitialized: this.config.enableSessions
-          ? (sessionId: string): void => {
-              logger.debug(`Session initialized: ${sessionId}`);
-              this.sessions.set(sessionId, {
-                id: sessionId,
-                createdAt: new Date(),
-                lastActivity: new Date(),
-                expiresAt: new Date(Date.now() + (this.config.sessionTimeout || 3600) * 1000),
-              });
-            }
-          : undefined,
-      });
-
-      // Connect MCP transport to the server
-      await _mcpServer.connect(this.mcpTransport);
-
-      // Start listening
       await new Promise<void>((resolve, reject) => {
         this.server!.listen(this.config.port, this.config.host, () => {
           logger.info(`Streamable HTTP transport listening on ${this.config.host}:${this.config.port}`);
@@ -105,25 +77,21 @@ export class StreamableHTTPTransport implements Transport {
     
     logger.debug(`${req.method} ${url.pathname}`);
 
-    // Health check endpoint
     if (url.pathname === '/health' && req.method === 'GET') {
       this.handleHealth(req, res);
       return;
     }
 
-    // Status check endpoint (alias for /health)
     if (url.pathname === '/status' && req.method === 'GET') {
       this.handleHealth(req, res);
       return;
     }
 
-    // MCP endpoint
     if (url.pathname === this.config.path) {
       await this.handleMCPRequest(req, res);
       return;
     }
 
-    // 404 for unknown paths
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not found' }));
   }
@@ -132,7 +100,7 @@ export class StreamableHTTPTransport implements Transport {
     const health = {
       status: 'ok',
       transport: 'streamable-http',
-      version: '0.5.2',
+      version: '0.6.0',
       sessions: this.sessions.size,
       timestamp: new Date().toISOString(),
     };
@@ -143,30 +111,88 @@ export class StreamableHTTPTransport implements Transport {
 
   private async handleMCPRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     try {
-      // Check authorization
       if (!this.isAuthorized(req)) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Unauthorized' }));
         return;
       }
 
-      // Check CORS
       if (!this.handleCors(req, res)) {
         return;
       }
 
-      // Delegate to MCP transport
-      if (this.mcpTransport) {
-        await this.mcpTransport.handleRequest(req, res, (req as {body?: unknown}).body);
-      } else {
+      if (!this.mcpServer) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Transport not ready' }));
+        res.end(JSON.stringify({ error: 'Server not ready' }));
+        return;
       }
+
+      let parsedBody: unknown = undefined;
+      if (req.method === 'POST') {
+        parsedBody = await this.parseBody(req);
+      }
+
+      const mcpTransport = this.createTransport();
+      await this.mcpServer.connect(mcpTransport);
+
+      try {
+        await mcpTransport.handleRequest(req, res, parsedBody);
+      } finally {
+        await mcpTransport.close();
+      }
+
     } catch (error) {
       logger.error('Error handling MCP request:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Internal server error' }));
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          error: 'Internal server error', 
+          details: error instanceof Error ? error.message : String(error) 
+        }));
+      }
     }
+  }
+
+  private createTransport(): StreamableHTTPServerTransport {
+    if (this.config.enableSessions) {
+      return new StreamableHTTPServerTransport({
+        sessionIdGenerator: (): string => generateId(),
+        onsessioninitialized: (sessionId: string): void => {
+          logger.debug(`Session initialized: ${sessionId}`);
+          this.sessions.set(sessionId, {
+            id: sessionId,
+            createdAt: new Date(),
+            lastActivity: new Date(),
+            expiresAt: new Date(Date.now() + (this.config.sessionTimeout || 3600) * 1000),
+          });
+        },
+      });
+    }
+
+    return new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+  }
+
+  private async parseBody(req: http.IncomingMessage): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', () => {
+        try {
+          if (body) {
+            resolve(JSON.parse(body));
+          } else {
+            resolve(undefined);
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+      req.on('error', reject);
+    });
   }
 
   private isAuthorized(req: http.IncomingMessage): boolean {
@@ -187,11 +213,9 @@ export class StreamableHTTPTransport implements Transport {
       }
       
       case 'api-key': {
-        // Check header
         if (authHeader === this.config.authToken) {
           return true;
         }
-        // Check query param
         const url = new URL(req.url || '/', `http://${req.headers.host}`);
         if (url.searchParams.get('api_key') === this.config.authToken) {
           return true;
@@ -210,13 +234,11 @@ export class StreamableHTTPTransport implements Transport {
     const cors = this.config.cors;
 
     if (!cors) {
-      // Default CORS - allow all for development
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id');
       res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id');
     } else {
-      // Check if origin is allowed
       const allowed = cors.origins.includes('*') || cors.origins.includes(origin);
       
       if (!allowed && origin) {
@@ -237,7 +259,6 @@ export class StreamableHTTPTransport implements Transport {
       }
     }
 
-    // Handle preflight
     if (req.method === 'OPTIONS') {
       res.writeHead(200);
       res.end();
@@ -266,20 +287,12 @@ export class StreamableHTTPTransport implements Transport {
   async close(): Promise<void> {
     logger.info('Closing Streamable HTTP transport');
 
-    // Stop cleanup interval
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
     }
 
-    // Clear sessions
     this.sessions.clear();
 
-    // Close MCP transport
-    if (this.mcpTransport) {
-      await this.mcpTransport.close();
-    }
-
-    // Close HTTP server
     if (this.server) {
       await new Promise<void>((resolve) => {
         this.server!.close(() => {

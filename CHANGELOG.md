@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-03-18
+
+### Added
+
+- **Pinchtab v0.8.3 support** - Updated default Docker image and install script to use latest Pinchtab
+- **Fixed MCP Streamable HTTP transport** - Fixed connection handling by creating new transport per request
+  - Resolved issues with HTTP mode connection stability
+  - Improved error handling in MCP request processing
+  - Better session management for stateful connections
+- **Claude Code Skill documentation** - Added `CLAUDE_CODE_SKILL.md` with detailed installation and usage guide
+  - Contributed by @Makishima09 (see Issue #2)
+  - Spanish language documentation for Claude Code CLI users
+  - Includes installation steps, tool reference, examples, and troubleshooting
+
+### Changed
+
+- **Updated version to 0.6.0** - Synchronized version across all components
+- Updated Pinchtab Docker image from v0.6.3 to v0.8.3
+- Updated install.sh to download Pinchtab v0.8.3 binary
+- Enhanced MCP HTTP transport reliability and error handling
+
 ## [0.5.1] - 2026-02-24
 
 ### Added
