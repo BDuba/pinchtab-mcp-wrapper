@@ -52,9 +52,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build
-        run: npm run build
-      
       - name: Start test services
         run: docker compose -f docker-compose.test.yml up -d
       
@@ -72,8 +69,11 @@ jobs:
           echo "Timeout waiting for Pinchtab"
           exit 1
       
+      - name: Build test files
+        run: npm run build:test
+      
       - name: Integration tests (stdio)
-        run: npm run test:integration
+        run: node --test dist-test/tests/integration/pinchtab.integration.test.js
         env:
           PINCHTAB_URL: http://127.0.0.1:19867
           PINCHTAB_TOKEN: test-token
@@ -98,9 +98,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build
-        run: npm run build
-      
       - name: Start test services
         run: docker compose -f docker-compose.test.yml up -d
       
@@ -118,8 +115,11 @@ jobs:
           echo "Timeout waiting for Pinchtab"
           exit 1
       
+      - name: Build test files
+        run: npm run build:test
+      
       - name: Integration tests (Streamable HTTP)
-        run: npm run test:integration:http
+        run: node --test dist-test/tests/integration/streamable-http.integration.test.js
         env:
           PINCHTAB_URL: http://127.0.0.1:19867
           PINCHTAB_TOKEN: test-token
@@ -146,7 +146,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build test
+      - name: Build all
         run: npm run build && npm run build:test
       
       - name: Start test services
@@ -167,14 +167,14 @@ jobs:
           exit 1
       
       - name: E2E tests (stdio)
-        run: npm run test:e2e
+        run: node --test dist-test/tests/**/*.stdio.e2e.test.js
         env:
           PINCHTAB_MODE: external
           PINCHTAB_URL: http://127.0.0.1:19867
           PINCHTAB_TOKEN: test-token
 
       - name: E2E tests (HTTP mode)
-        run: npm run test:e2e:http
+        run: MCP_TRANSPORT=streamable-http node --test dist-test/tests/**/*.http.e2e.test.js
         env:
           PINCHTAB_MODE: external
           PINCHTAB_URL: http://127.0.0.1:19867
@@ -187,7 +187,6 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.test.yml down
 
-  # Test all test suites in one job (as requested by user)
   test-all:
     runs-on: ubuntu-latest
     needs: build
@@ -229,13 +228,13 @@ jobs:
         run: npm run test:unit
       
       - name: Run integration tests (stdio)
-        run: npm run test:integration
+        run: node --test dist-test/tests/integration/pinchtab.integration.test.js
         env:
           PINCHTAB_URL: http://127.0.0.1:19867
           PINCHTAB_TOKEN: test-token
       
       - name: Run integration tests (HTTP)
-        run: npm run test:integration:http
+        run: node --test dist-test/tests/integration/streamable-http.integration.test.js
         env:
           PINCHTAB_URL: http://127.0.0.1:19867
           PINCHTAB_TOKEN: test-token
@@ -243,14 +242,14 @@ jobs:
           MCP_AUTH_TOKEN: mcp-test-token
       
       - name: Run E2E tests (stdio)
-        run: npm run test:e2e
+        run: node --test dist-test/tests/**/*.stdio.e2e.test.js
         env:
           PINCHTAB_MODE: external
           PINCHTAB_URL: http://127.0.0.1:19867
           PINCHTAB_TOKEN: test-token
       
       - name: Run E2E tests (HTTP)
-        run: npm run test:e2e:http
+        run: MCP_TRANSPORT=streamable-http node --test dist-test/tests/**/*.http.e2e.test.js
         env:
           PINCHTAB_MODE: external
           PINCHTAB_URL: http://127.0.0.1:19867
@@ -273,7 +272,6 @@ jobs:
             dist-test/
           retention-days: 7
 
-  # Release job - creates tags automatically when version changes in package.json
   release:
     runs-on: ubuntu-latest
     needs: [build, integration, integration-http, e2e]
