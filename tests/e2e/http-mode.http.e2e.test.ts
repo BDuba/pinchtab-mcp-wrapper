@@ -70,6 +70,17 @@ describe('HTTP Mode E2E Tests', () => {
     console.log('Warming up connection...');
     await client.callTool({ name: 'pinchtab_health', arguments: {} });
 
+    // Warmup: try to open tab to initialize Chrome instance (may timeout)
+    try {
+      await client.callTool({
+        name: 'tab_open',
+        arguments: { url: 'data:text/html,<h1>Warmup</h1>' },
+      });
+      console.log('Warmup tab opened successfully');
+    } catch (e) {
+      console.log('Warmup tab failed (expected), Chrome is initializing...');
+    }
+
     // Additional delay for Chrome startup
     await new Promise(resolve => setTimeout(resolve, 3000));
   });
