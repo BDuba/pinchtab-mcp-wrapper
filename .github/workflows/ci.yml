@@ -55,6 +55,14 @@ jobs:
       - name: Start test services
         run: docker compose -f docker-compose.test.yml up -d
       
+      - name: Check Docker containers status
+        run: |
+          echo "=== Docker containers status ==="
+          docker ps -a
+          echo ""
+          echo "=== Docker compose services ==="
+          docker compose -f docker-compose.test.yml ps
+      
       - name: Wait for services
         run: |
           echo "Waiting for Pinchtab to be ready..."
@@ -67,7 +75,23 @@ jobs:
             sleep 1
           done
           echo "Timeout waiting for Pinchtab"
+          echo ""
+          echo "=== Docker diagnostics on failure ==="
+          echo "=== Docker compose logs ==="
+          docker compose -f docker-compose.test.yml logs
+          echo ""
+          echo "=== Docker containers status ==="
+          docker ps -a
           exit 1
+      
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          echo "=== Pinchtab service logs ==="
+          docker compose -f docker-compose.test.yml logs pinchtab
+          echo ""
+          echo "=== All service logs ==="
+          docker compose -f docker-compose.test.yml logs
       
       - name: Build test files
         run: npm run build:test
@@ -101,6 +125,14 @@ jobs:
       - name: Start test services
         run: docker compose -f docker-compose.test.yml up -d
       
+      - name: Check Docker containers status
+        run: |
+          echo "=== Docker containers status ==="
+          docker ps -a
+          echo ""
+          echo "=== Docker compose services ==="
+          docker compose -f docker-compose.test.yml ps
+      
       - name: Wait for Pinchtab
         run: |
           echo "Waiting for Pinchtab to be ready..."
@@ -113,7 +145,23 @@ jobs:
             sleep 1
           done
           echo "Timeout waiting for Pinchtab"
+          echo ""
+          echo "=== Docker diagnostics on failure ==="
+          echo "=== Docker compose logs ==="
+          docker compose -f docker-compose.test.yml logs
+          echo ""
+          echo "=== Docker containers status ==="
+          docker ps -a
           exit 1
+      
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          echo "=== Pinchtab service logs ==="
+          docker compose -f docker-compose.test.yml logs pinchtab
+          echo ""
+          echo "=== All service logs ==="
+          docker compose -f docker-compose.test.yml logs
       
       - name: Build test files
         run: npm run build:test
@@ -152,6 +200,14 @@ jobs:
       - name: Start test services
         run: docker compose -f docker-compose.test.yml up -d
       
+      - name: Check Docker containers status
+        run: |
+          echo "=== Docker containers status ==="
+          docker ps -a
+          echo ""
+          echo "=== Docker compose services ==="
+          docker compose -f docker-compose.test.yml ps
+      
       - name: Wait for Pinchtab
         run: |
           echo "Waiting for Pinchtab to be ready..."
@@ -164,7 +220,23 @@ jobs:
             sleep 1
           done
           echo "Timeout waiting for Pinchtab"
+          echo ""
+          echo "=== Docker diagnostics on failure ==="
+          echo "=== Docker compose logs ==="
+          docker compose -f docker-compose.test.yml logs
+          echo ""
+          echo "=== Docker containers status ==="
+          docker ps -a
           exit 1
+      
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          echo "=== Pinchtab service logs ==="
+          docker compose -f docker-compose.test.yml logs pinchtab
+          echo ""
+          echo "=== All service logs ==="
+          docker compose -f docker-compose.test.yml logs
       
       - name: E2E tests (stdio)
         run: node --test dist-test/tests/**/*.stdio.e2e.test.js
@@ -210,6 +282,14 @@ jobs:
       - name: Start test services
         run: docker compose -f docker-compose.test.yml up -d
       
+      - name: Check Docker containers status
+        run: |
+          echo "=== Docker containers status ==="
+          docker ps -a
+          echo ""
+          echo "=== Docker compose services ==="
+          docker compose -f docker-compose.test.yml ps
+      
       - name: Wait for Pinchtab
         run: |
           echo "Waiting for Pinchtab to be ready..."
@@ -222,7 +302,23 @@ jobs:
             sleep 1
           done
           echo "Timeout waiting for Pinchtab"
+          echo ""
+          echo "=== Docker diagnostics on failure ==="
+          echo "=== Docker compose logs ==="
+          docker compose -f docker-compose.test.yml logs
+          echo ""
+          echo "=== Docker containers status ==="
+          docker ps -a
           exit 1
+      
+      - name: Show service logs on failure
+        if: failure()
+        run: |
+          echo "=== Pinchtab service logs ==="
+          docker compose -f docker-compose.test.yml logs pinchtab
+          echo ""
+          echo "=== All service logs ==="
+          docker compose -f docker-compose.test.yml logs
       
       - name: Run all unit tests
         run: npm run test:unit
