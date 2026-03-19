@@ -634,7 +634,7 @@ npm test
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
 
 **Latest release**: v0.6.0 (2026-03-18)
-- **Pinchtab v0.8.3 support** - Updated to latest Pinchtab with improvements
+- **Pinchtab v0.7.8 support** - Updated to stable Pinchtab version
 - **Fixed MCP Streamable HTTP transport** - Improved connection stability and error handling
 
 **Previous releases**:

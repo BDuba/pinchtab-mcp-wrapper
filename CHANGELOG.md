@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Pinchtab v0.8.3 support** - Updated default Docker image and install script to use latest Pinchtab
+- **Pinchtab v0.7.8 support** - Updated default Docker image and install script
 - **Fixed MCP Streamable HTTP transport** - Fixed connection handling by creating new transport per request
   - Resolved issues with HTTP mode connection stability
   - Improved error handling in MCP request processing
@@ -18,12 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Contributed by @Makishima09 (see Issue #2)
   - Spanish language documentation for Claude Code CLI users
   - Includes installation steps, tool reference, examples, and troubleshooting
+- **CI Docker diagnostics** - Added comprehensive Docker logging for container startup failures
 
 ### Changed
 
 - **Updated version to 0.6.0** - Synchronized version across all components
-- Updated Pinchtab Docker image from v0.6.3 to v0.8.3
-- Updated install.sh to download Pinchtab v0.8.3 binary
+- Updated Pinchtab Docker image from v0.6.3 to v0.7.8 (v0.8.3 has broken Docker image with Chrome flags error)
+- Updated install.sh to download Pinchtab v0.7.8 binary
 - Enhanced MCP HTTP transport reliability and error handling
 
 ## [0.5.1] - 2026-02-24
