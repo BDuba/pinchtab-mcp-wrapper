@@ -45,7 +45,7 @@ export class PinchtabMcpServer {
     this.server = new Server(
       {
         name: 'pinchtab-mcp-wrapper',
-        version: '0.5.1',
+        version: '0.6.1',
       },
       {
         capabilities: {
@@ -196,7 +196,7 @@ export class PinchtabMcpServer {
   async initialize(): Promise<void> {
     const config = getConfig();
     
-    logger.info('Initializing Pinchtab MCP Wrapper v0.5.1');
+    logger.info('Initializing Pinchtab MCP Wrapper v0.6.1');
     logger.info(`Mode: ${config.mode}`);
     logger.info(`Transport: ${config.transport}`);
 
@@ -292,7 +292,7 @@ async function main(): Promise<void> {
   
   // Debug: Log all environment variables at startup
   logger.info('=== MCP Server Starting ===');
-  logger.info(`Version: 0.5.2`);
+  logger.info(`Version: 0.6.2`);
   logger.info(`PINCHTAB_MODE: ${process.env.PINCHTAB_MODE || 'not set'}`);
   logger.info(`PINCHTAB_TOKEN: ${process.env.PINCHTAB_TOKEN ? 'set (length: ' + process.env.PINCHTAB_TOKEN.length + ')' : 'not set'}`);
   logger.info(`PINCHTAB_DOCKER_IMAGE: ${process.env.PINCHTAB_DOCKER_IMAGE || 'not set'}`);

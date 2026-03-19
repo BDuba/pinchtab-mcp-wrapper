@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-03-19
+
+### Fixed
+
+- **OpenCode MCP configuration** - Fixed MCP server setup for OpenCode integration
+  - Updated README.md with correct configuration using `node` directly instead of bash script
+  - Added required `environment` variables (PINCHTAB_MODE=external, PINCHTAB_URL, PINCHTAB_TOKEN)
+  - Updated install.sh to generate correct OpenCode configuration automatically
+  - Added Docker container check in installation completion message
+
 ## [0.6.1] - 2026-03-19
 
 ### Fixed

@@ -227,7 +227,14 @@ try {
     if (!config.mcp.pinchtab) {
         config.mcp.pinchtab = {
             type: "local",
-            command: [installDir + "/run-mcp.sh"],
+            command: ["/usr/bin/node", installDir + "/dist/index.js"],
+            environment: {
+                PINCHTAB_MODE: "external",
+                PINCHTAB_URL: "http://127.0.0.1:9867",
+                PINCHTAB_TOKEN: "opencode-browser-token-secure",
+                MCP_TRANSPORT: "stdio",
+                LOG_LEVEL: "info"
+            },
             enabled: true
         };
         
@@ -265,7 +272,14 @@ else
   "mcp": {
     "pinchtab": {
       "type": "local",
-      "command": ["$INSTALL_DIR/run-mcp.sh"],
+      "command": ["/usr/bin/node", "$INSTALL_DIR/dist/index.js"],
+      "environment": {
+        "PINCHTAB_MODE": "external",
+        "PINCHTAB_URL": "http://127.0.0.1:9867",
+        "PINCHTAB_TOKEN": "opencode-browser-token-secure",
+        "MCP_TRANSPORT": "stdio",
+        "LOG_LEVEL": "info"
+      },
       "enabled": true
     }
   }
@@ -331,8 +345,11 @@ fi
 
 echo ""
 echo -e "${YELLOW}🚀 Next steps:${NC}"
-echo "   1. Restart OpenCode completely"
-echo "   2. Run '/status' to verify pinchtab is working"
+echo "   1. Ensure Pinchtab Docker container is running:"
+echo "      docker ps | grep pinchtab"
+echo "      docker start pinchtab  # if not running"
+echo "   2. Restart OpenCode completely"
+echo "   3. Run '/status' to verify pinchtab is working"
 echo "   3. Try: 'открой https://example.com и сделай скриншот'"
 echo ""
 echo -e "${YELLOW}📖 Available commands:${NC}"

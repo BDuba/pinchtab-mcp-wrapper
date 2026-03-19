@@ -198,7 +198,17 @@ Add to `~/.config/opencode/opencode.json`:
   "mcp": {
     "pinchtab": {
       "type": "local",
-      "command": ["~/.pinchtab-mcp-wrapper/run-mcp.sh"],
+      "command": [
+        "/usr/bin/node",
+        "~/.pinchtab-mcp-wrapper/dist/index.js"
+      ],
+      "environment": {
+        "PINCHTAB_MODE": "external",
+        "PINCHTAB_URL": "http://127.0.0.1:9867",
+        "PINCHTAB_TOKEN": "opencode-browser-token-secure",
+        "MCP_TRANSPORT": "stdio",
+        "LOG_LEVEL": "info"
+      },
       "enabled": true
     }
   },
@@ -214,6 +224,12 @@ Add to `~/.config/opencode/opencode.json`:
   },
   "default_agent": "browser"
 }
+```
+
+**Prerequisites:** Ensure Pinchtab Docker container is running:
+```bash
+docker ps | grep pinchtab  # Check if running
+docker start pinchtab       # Start if stopped
 ```
 
 ### Claude Code
