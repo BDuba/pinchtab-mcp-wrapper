@@ -4,6 +4,20 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { PinchtabMcpServer } from '../../src/index.js';
 
+// Retry helper for slow Chrome startup in CI
+async function retryWithDelay<T>(fn: () => Promise<T>, retries = 3, delayMs = 5000): Promise<T> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      console.log(`Retry ${i + 1}/${retries} after ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  throw new Error('Should not reach here');
+}
+
 describe('HTTP Mode E2E Tests', () => {
   let server: PinchtabMcpServer;
   let client: Client;
@@ -89,13 +103,16 @@ describe('HTTP Mode E2E Tests', () => {
   });
 
   it('should open tab and navigate', async () => {
-    // Open tab
-    const openResult = await client.callTool({
+    // Use local Pinchtab endpoint to avoid external network in CI
+    const pinchtabUrl = process.env.PINCHTAB_URL || 'http://127.0.0.1:19867';
+    
+    // Open tab with retry for slow Chrome startup in CI
+    const openResult = await retryWithDelay(() => client.callTool({
       name: 'tab_open',
       arguments: {
-        url: 'https://example.com',
+        url: `${pinchtabUrl}/dashboard`,
       },
-    });
+    }));
 
     assert.ok(openResult, 'Should return open result');
     const content = openResult.content as Array<{ type: string; text?: string }>;
@@ -129,13 +146,13 @@ describe('HTTP Mode E2E Tests', () => {
   });
 
   it('should read page text', async () => {
-    // Open tab with a simple page
-    const openResult = await client.callTool({
+    // Open tab with retry for slow Chrome startup in CI
+    const openResult = await retryWithDelay(() => client.callTool({
       name: 'tab_open',
       arguments: {
         url: 'https://example.com',
       },
-    });
+    }));
 
     const content = openResult.content as Array<{ type: string; text?: string }>;
     const textContent = content.find((c) => c.type === 'text');
