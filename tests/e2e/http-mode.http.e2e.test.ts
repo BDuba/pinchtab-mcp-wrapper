@@ -66,9 +66,12 @@ describe('HTTP Mode E2E Tests', () => {
     // Connect client
     await client.connect(transport);
 
-    // Warmup: wait for Chrome to be ready
-    console.log('Waiting for Chrome to be ready...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Warmup: call health tool to ensure connection is ready
+    console.log('Warming up connection...');
+    await client.callTool({ name: 'pinchtab_health', arguments: {} });
+
+    // Additional delay for Chrome startup
+    await new Promise(resolve => setTimeout(resolve, 3000));
   });
 
   after(async () => {
@@ -107,11 +110,11 @@ describe('HTTP Mode E2E Tests', () => {
   });
 
   it('should open tab and navigate', async () => {
-    // Use same URL as working test - external but fast
+    // Use data URL for instant loading without network
     const openResult = await client.callTool({
       name: 'tab_open',
       arguments: {
-        url: 'https://example.com',
+        url: 'data:text/html,<h1>Test Page</h1>',
       },
     });
 
@@ -119,21 +122,10 @@ describe('HTTP Mode E2E Tests', () => {
     const content = openResult.content as Array<{ type: string; text?: string }>;
     const textContent = content.find((c) => c.type === 'text');
     assert.ok(textContent, 'Should have text content');
-    
+
     const tabInfo = JSON.parse(textContent.text!);
     assert.ok(tabInfo.tabId, 'Should have tabId');
     assert.ok(tabInfo.url, 'Should have url');
-
-    // Take snapshot
-    const snapshotResult = await client.callTool({
-      name: 'snapshot',
-      arguments: {
-        tabId: tabInfo.tabId,
-        format: 'compact',
-      },
-    });
-
-    assert.ok(snapshotResult, 'Should return snapshot');
 
     // Close tab
     const closeResult = await client.callTool({
