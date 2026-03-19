@@ -62,9 +62,13 @@ describe('HTTP Mode E2E Tests', () => {
 
     // Wait for server to be fully ready before connecting
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     // Connect client
     await client.connect(transport);
+
+    // Warmup: wait for Chrome to be ready
+    console.log('Waiting for Chrome to be ready...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
   });
 
   after(async () => {
