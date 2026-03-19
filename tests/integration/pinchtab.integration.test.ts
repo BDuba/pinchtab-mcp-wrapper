@@ -4,13 +4,15 @@ import { PinchtabClient } from '../../src/client/pinchtab-client.js';
 
 const PINCHTAB_URL = process.env.PINCHTAB_URL || 'http://127.0.0.1:19867';
 const PINCHTAB_TOKEN = process.env.PINCHTAB_TOKEN || 'test-token';
+// Use longer timeout in CI (60s) vs local (30s) because Chrome starts slowly in GitHub Actions
+const PINCHTAB_TIMEOUT = process.env.CI ? 60000 : 30000;
 
 describe('Integration Tests', () => {
   let client: PinchtabClient;
   let isHealthy = false;
 
   before(async () => {
-    client = new PinchtabClient(PINCHTAB_URL, PINCHTAB_TOKEN);
+    client = new PinchtabClient(PINCHTAB_URL, PINCHTAB_TOKEN, PINCHTAB_TIMEOUT);
     try {
       const health = await client.health();
       isHealthy = health.status === 'ok';
