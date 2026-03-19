@@ -103,14 +103,14 @@ describe('HTTP Mode E2E Tests', () => {
   });
 
   it('should open tab and navigate', async () => {
-    // Use local Pinchtab endpoint to avoid external network in CI
+    // Use local Pinchtab health endpoint - simple JSON, loads fast
     const pinchtabUrl = process.env.PINCHTAB_URL || 'http://127.0.0.1:19867';
     
     // Open tab with retry for slow Chrome startup in CI
     const openResult = await retryWithDelay(() => client.callTool({
       name: 'tab_open',
       arguments: {
-        url: `${pinchtabUrl}/dashboard`,
+        url: `${pinchtabUrl}/health`,
       },
     }));
 
