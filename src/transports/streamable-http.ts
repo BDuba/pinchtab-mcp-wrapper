@@ -10,7 +10,7 @@ const logger = getLogger();
 export class StreamableHTTPTransport implements Transport {
   private config: TransportConfig;
   private server?: http.Server;
-  private mcpServer?: MCPServer;
+  private mcpTransport?: StreamableHTTPServerTransport;
   private sessions: Map<string, Session> = new Map();
   private info: TransportInfo;
   private cleanupInterval?: NodeJS.Timeout;
@@ -35,9 +35,16 @@ export class StreamableHTTPTransport implements Transport {
 
   async connect(mcpServer: MCPServer): Promise<void> {
     try {
-      this.mcpServer = mcpServer;
       logger.info(`Starting Streamable HTTP transport on ${this.config.host}:${this.config.port}`);
 
+      // Create the MCP Streamable HTTP transport once
+      this.mcpTransport = this.createTransport();
+      
+      // Connect MCP Server to the transport
+      await mcpServer.connect(this.mcpTransport);
+      logger.info('MCP Server connected to Streamable HTTP transport');
+
+      // Create HTTP server to handle requests
       this.server = http.createServer(this.handleRequest.bind(this));
 
       if (this.config.enableSessions) {
@@ -121,7 +128,7 @@ export class StreamableHTTPTransport implements Transport {
         return;
       }
 
-      if (!this.mcpServer) {
+      if (!this.mcpTransport) {
         res.writeHead(503, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Server not ready' }));
         return;
@@ -132,14 +139,8 @@ export class StreamableHTTPTransport implements Transport {
         parsedBody = await this.parseBody(req);
       }
 
-      const mcpTransport = this.createTransport();
-      await this.mcpServer.connect(mcpTransport);
-
-      try {
-        await mcpTransport.handleRequest(req, res, parsedBody);
-      } finally {
-        await mcpTransport.close();
-      }
+      // Delegate to the MCP transport - no need to create new transport or reconnect
+      await this.mcpTransport.handleRequest(req, res, parsedBody);
 
     } catch (error) {
       logger.error('Error handling MCP request:', error);
@@ -292,6 +293,10 @@ export class StreamableHTTPTransport implements Transport {
     }
 
     this.sessions.clear();
+
+    if (this.mcpTransport) {
+      await this.mcpTransport.close();
+    }
 
     if (this.server) {
       await new Promise<void>((resolve) => {
