@@ -46,7 +46,23 @@ describe('HTTP Mode E2E Tests', () => {
       }
     );
 
-    await client.connect(transport);
+    // Wait for server to be fully ready before connecting
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Retry connection with delay to handle slow startup in CI
+    let lastError;
+    for (let i = 0; i < 5; i++) {
+      try {
+        await client.connect(transport);
+        console.log('Client connected successfully');
+        return;
+      } catch (error) {
+        lastError = error;
+        console.log(`Connection attempt ${i + 1}/5 failed, retrying in 2s...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+    throw lastError;
   });
 
   after(async () => {
