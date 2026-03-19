@@ -19,22 +19,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Pinchtab v0.7.8 support** - Updated default Docker image and install script
-- **Fixed MCP Streamable HTTP transport** - Fixed connection handling by creating new transport per request
-  - Resolved issues with HTTP mode connection stability
-  - Improved error handling in MCP request processing
-  - Better session management for stateful connections
+- **Fixed MCP Streamable HTTP transport architecture** - Critical fix for HTTP mode
+  - Fixed issue where new transport was created per request causing connection failures
+  - MCP Server now connects once to a single transport instance
+  - Resolved "Server not initialized" errors in E2E tests
+  - Improved connection stability and error handling
 - **Claude Code Skill documentation** - Added `CLAUDE_CODE_SKILL.md` with detailed installation and usage guide
   - Contributed by @Makishima09 (see Issue #2)
   - Spanish language documentation for Claude Code CLI users
   - Includes installation steps, tool reference, examples, and troubleshooting
 - **CI Docker diagnostics** - Added comprehensive Docker logging for container startup failures
+  - Shows docker ps and container status on failure
+  - Prints Pinchtab service logs when health check times out
+- **Node.js 22.x support** - Added to CI test matrix
 
 ### Changed
 
 - **Updated version to 0.6.0** - Synchronized version across all components
-- Updated Pinchtab Docker image from v0.6.3 to v0.7.8 (v0.8.3 has broken Docker image with Chrome flags error)
+- **Downgraded Pinchtab from v0.8.3 to v0.7.8** - v0.8.3 Docker image was broken (Chrome flags error)
 - Updated install.sh to download Pinchtab v0.7.8 binary
 - Enhanced MCP HTTP transport reliability and error handling
+- Updated CI workflow to prevent double-build issues
+- Increased test timeouts for slow Chrome startup in CI (60s → 120s)
+- Added retry logic for integration tests
+
+### Fixed
+
+- Fixed CI test execution - removed redundant build steps causing failures
+- Fixed integration test timeouts by increasing Pinchtab client timeout
+- Fixed E2E HTTP tests connection issues with proper transport lifecycle management
 
 ## [0.5.1] - 2026-02-24
 
