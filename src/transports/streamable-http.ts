@@ -107,7 +107,7 @@ export class StreamableHTTPTransport implements Transport {
     const health = {
       status: 'ok',
       transport: 'streamable-http',
-      version: '0.6.0',
+      version: '0.6.1',
       sessions: this.sessions.size,
       timestamp: new Date().toISOString(),
     };

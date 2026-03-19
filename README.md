@@ -633,7 +633,11 @@ npm test
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history and changes.
 
-**Latest release**: v0.6.0 (2026-03-18)
+**Latest release**: v0.6.1 (2026-03-19)
+- **E2E HTTP tests stability** - Fixed intermittent timeouts in HTTP mode E2E tests
+- All v0.6.0 features included
+
+**Previous release (v0.6.0)**:
 - **Pinchtab v0.7.8 support** - Updated to stable Pinchtab version
 - **Fixed MCP Streamable HTTP transport** - Improved connection stability and error handling
 

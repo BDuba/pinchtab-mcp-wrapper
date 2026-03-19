@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-03-19
+
+### Fixed
+
+- **E2E HTTP tests stability** - Fixed intermittent timeouts in HTTP mode E2E tests
+  - Added warmup call to initialize Chrome instance before test execution
+  - Simplified test cases to use data URLs for faster loading
+  - Streamlined test flow by removing unnecessary snapshot operations
+
 ## [0.6.0] - 2026-03-18
 
 ### Added
