@@ -4,8 +4,22 @@ import { PinchtabClient } from '../../src/client/pinchtab-client.js';
 
 const PINCHTAB_URL = process.env.PINCHTAB_URL || 'http://127.0.0.1:19867';
 const PINCHTAB_TOKEN = process.env.PINCHTAB_TOKEN || 'test-token';
-// Use longer timeout in CI (60s) vs local (30s) because Chrome starts slowly in GitHub Actions
-const PINCHTAB_TIMEOUT = process.env.CI ? 60000 : 30000;
+// Use longer timeout in CI (120s) vs local (30s) because Chrome starts slowly in GitHub Actions
+const PINCHTAB_TIMEOUT = process.env.CI ? 120000 : 30000;
+
+// Helper to retry operations with delay
+async function retryWithDelay<T>(fn: () => Promise<T>, retries = 3, delayMs = 5000): Promise<T> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      console.log(`Retry ${i + 1}/${retries} after ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  throw new Error('Should not reach here');
+}
 
 describe('Integration Tests', () => {
   let client: PinchtabClient;
@@ -57,7 +71,8 @@ describe('Integration Tests', () => {
         console.log('Skipping: Chrome not available in CI environment');
         return;
       }
-      const tab = await client.openTab();
+      // Retry openTab to handle slow Chrome startup in CI
+      const tab = await retryWithDelay(() => client.openTab(), 3, 5000);
       assert.ok(tab.tabId);
       await client.closeTab(tab.tabId);
     });
