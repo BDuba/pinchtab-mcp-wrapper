@@ -590,6 +590,100 @@ Most MCP clients support Streamable HTTP natively. Configure your AI agent with:
 }
 ```
 
+#### Running Multiple AI Agents with One Pinchtab Instance
+
+**Scenario:** You have multiple AI agents (OpenCode, LobeChat, Claude Code, Cursor, etc.) and want to use a single Pinchtab Docker container for all of them.
+
+**Problem:** Each AI agent may require a different MCP transport (stdio for CLI agents, HTTP for server-based agents).
+
+**Solution:** Use one Pinchtab container with multiple MCP servers:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 Pinchtab Docker Container                   │
+│                 (http://127.0.0.1:9867)                      │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────────┐
+│              MCP Wrapper HTTP Server                        │
+│              (http://0.0.0.0:3001/mcp)                      │
+│   • LobeChat ───────┐  • Other HTTP clients ───┐            │
+│   • Remote agents ──┘  • Cloud services ───────┘            │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│              MCP Wrapper stdio Servers                      │
+│   • OpenCode ───────┐  • Claude Code ───────┐               │
+│   • Cursor ─────────┘  • Zed ───────────────┘               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Setup Steps:**
+
+1. **Start Pinchtab Docker container:**
+```bash
+docker run -d \
+  --name pinchtab \
+  -p 127.0.0.1:9867:9867 \
+  -e PINCHTAB_TOKEN=opencode-browser-token-secure \
+  pinchtab:local
+```
+
+2. **Start HTTP MCP server for server-based agents (LobeChat, etc.):**
+```bash
+export PINCHTAB_MODE=external
+export PINCHTAB_URL=http://127.0.0.1:9867
+export PINCHTAB_TOKEN=opencode-browser-token-secure
+export MCP_TRANSPORT=streamable-http
+export MCP_HTTP_PORT=3001
+export MCP_HTTP_HOST=0.0.0.0
+export MCP_AUTH_TYPE=none
+export MCP_ENABLE_SESSIONS=true
+node dist/index.js
+```
+
+3. **Configure CLI agents (OpenCode, Claude Code, Cursor, Zed) to use stdio:**
+   - OpenCode: `~/.config/opencode/opencode.json` (see [OpenCode section](#opencode))
+   - Claude Code: `.mcp.json` (see [Claude Code section](#claude-code))
+   - Cursor: MCP settings (see [Cursor section](#cursor))
+   - Zed: `~/.config/zed/settings.json` (see [Zed section](#zed))
+
+4. **Configure server-based agents (LobeChat) to use HTTP:**
+   - URL: `http://172.21.0.1:3001/mcp`
+   - Type: `Streamable HTTP`
+   - Auth: `None`
+
+**Benefits:**
+- **Single Pinchtab instance** for all AI agents
+- **No port conflicts** (stdio for CLI, HTTP for servers)
+- **Resource efficient** (one browser instance)
+- **Consistent browser state** across all agents
+
+**Making HTTP MCP server persistent:**
+
+```bash
+sudo tee /etc/systemd/system/pinchtab-mcp.service << 'EOF'
+[Unit]
+Description=Pinchtab MCP HTTP Server
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.pinchtab-mcp-wrapper
+ExecStart=/bin/bash -c 'export PINCHTAB_MODE=external && export PINCHTAB_URL=http://127.0.0.1:9867 && export PINCHTAB_TOKEN=opencode-browser-token-secure && export MCP_TRANSPORT=streamable-http && export MCP_HTTP_PORT=3001 && export MCP_HTTP_HOST=0.0.0.0 && export MCP_AUTH_TYPE=none && export MCP_ENABLE_SESSIONS=true && node dist/index.js'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable pinchtab-mcp
+sudo systemctl start pinchtab-mcp
+```
+
 ### Pinchtab Options (via Docker)
 ### Pinchtab Options (via Docker)
 
